@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"math/rand"
 	"net/http"
-	"strings"
 	"time"
-	"unicode/utf8"
+
+	"github.com/encse/altnet/lib/text"
 )
 
 type GithubActivity struct {
@@ -48,7 +48,7 @@ func GetSkyline(githubUser string, screenWidth int) (string, error) {
 	d := githubActivity.Max / 8
 
 	msg := "\n"
-	msg += center(fmt.Sprintf("Github SkyLine for %v\n", year), screenWidth)
+	msg += text.Center(fmt.Sprintf("Github SkyLine for %v\n", year), screenWidth)
 	msg += "\n"
 	msg += "\n"
 
@@ -78,30 +78,12 @@ func GetSkyline(githubUser string, screenWidth int) (string, error) {
 			}
 		}
 		row += "\n"
-		msg += center(row, screenWidth)
+		msg += text.Center(row, screenWidth)
 	}
-	msg += center(fmt.Sprintf("https://github.com/%v/", githubUser), screenWidth) + "\n"
+	msg += text.Center(fmt.Sprintf("https://github.com/%v/", githubUser), screenWidth) + "\n"
 	msg += "\n"
 	msg += "\n"
 	return msg, nil
-}
-
-func center(st string, width int) string {
-	lines := strings.Split(st, "\n")
-	maxWidth := 0
-	for _, line := range lines {
-		if utf8.RuneCountInString(line) >= maxWidth {
-			maxWidth = utf8.RuneCountInString(line)
-		}
-	}
-	for i, line := range lines {
-		pad := (width - maxWidth) / 2
-		if line == "" || pad <= 0 {
-			continue
-		}
-		lines[i] = strings.Repeat(" ", pad) + line
-	}
-	return strings.Join(lines, "\n")
 }
 
 func main() {

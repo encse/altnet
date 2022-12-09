@@ -6,10 +6,10 @@ import (
 	"net/http"
 	"os"
 	"strings"
-	"unicode/utf8"
 
 	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/encse/altnet/lib/config"
+	"github.com/encse/altnet/lib/text"
 )
 
 type TimelineEntry struct {
@@ -88,55 +88,12 @@ func createThread(timeline []TimelineEntry, currentEntry TimelineEntry) []Timeli
 
 func box(txt, label string, width int) string {
 	res := "+" + strings.Repeat("-", width-2) + "+\n"
-	for _, line := range strings.Split(linebreak(txt, width-4), "\n") {
+	for _, line := range strings.Split(text.Linebreak(txt, width-4), "\n") {
 		res += fmt.Sprintf("| %-*s |\n", width-4, line)
 	}
 	label = "--[" + label + "]--"
 	res += "+" + strings.Repeat("-", width-len(label)-2) + label + "+\n"
 	return res
-}
-
-func linebreak(text string, width int) string {
-	lines := strings.Split(text, "\n")
-	for i := 0; i < len(lines); i++ {
-		line := []rune(lines[i])
-		ichSpace := 0
-		nonEscapedChars := 0
-		for ich := 0; ich < len(line); ich++ {
-			nonEscapedChars++
-			if line[ich] == ' ' {
-				ichSpace = ich
-			}
-			if nonEscapedChars > width {
-				if ichSpace > 0 {
-					lines = append(lines, "")
-					copy(lines[i+1:], lines[i:])
-					lines[i] = strings.TrimRight(string(line[:ichSpace]), " ")
-					lines[i+1] = strings.TrimRight(string(line[ichSpace+1:]), " ")
-				}
-				break
-			}
-		}
-	}
-	return strings.Join(lines, "\n")
-}
-
-func center(st string, width int) string {
-	lines := strings.Split(st, "\n")
-	maxWidth := 0
-	for _, line := range lines {
-		if utf8.RuneCountInString(line) >= maxWidth {
-			maxWidth = utf8.RuneCountInString(line)
-		}
-	}
-	for i, line := range lines {
-		pad := (width - maxWidth) / 2
-		if line == "" || pad <= 0 {
-			continue
-		}
-		lines[i] = strings.Repeat(" ", pad) + line
-	}
-	return strings.Join(lines, "\n")
 }
 
 func main() {
