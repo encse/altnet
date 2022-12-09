@@ -1,4 +1,4 @@
-package github_skyline
+package main
 
 import (
 	"encoding/json"
@@ -63,7 +63,7 @@ func GetSkyline(githubUser string, screenWidth int) (string, error) {
 			}
 
 			if maxPerWeek >= d*j {
-				row += "█"
+				row += "#" // █
 			} else {
 				r := rand.Float32()
 				if r <= 0.025 {
@@ -108,5 +108,7 @@ func main() {
 	st, err := GetSkyline("encse", 120)
 	if err == nil {
 		fmt.Println(st)
+	} else {
+		fmt.Println(err)
 	}
 }
