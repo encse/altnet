@@ -1,0 +1,66 @@
+#!/bin/bash
+
+echo -e '\033[36m
+                           ##        .
+                     ## ## ##       ==
+                  ## ## ## ##      ===
+              /""""""""""""""""\___/ ===
+       \033[36m  ~~~ {~~ ~~~~ ~~~ ~~~~ ~~ ~ /  ===- ~~~
+              \______ o          __/
+                \    \        __/
+                 \____\______/\033[0m'
+tput sgr0
+
+USAGE='
+  service \033[31mstart\033[0m - start the environment
+  service \033[31mkick\033[0m - restarts the environment
+  service \033[31mlogs\033[0m - watch the Docker logs
+
+  service \033[31mshell\033[0m - runs the container with an interactive shell 
+  service \033[31mbuild\033[0m - build container
+'
+
+function build() {
+    source ./env
+    docker build \
+        --build-arg TWITTER_ACCESS_TOKEN=$TWITTER_ACCESS_TOKEN \
+        -t altnet \
+        -f Dockerfile .
+}
+
+function shell() {
+    build
+    docker run -it altnet /bin/bash
+}
+
+function start() {
+    build
+    docker run --restart always -d -p79:79 -p7979:7979 --name altnet altnet
+    echo -e 'Your containers are starting in the background. Use \033[31mservice log\033[0m to look at the logs.'
+}
+
+function stop() {
+    echo -e "stopping"
+    docker rm -f altnet
+}
+
+function kick() {
+    stop && start 
+}
+
+function logs() {
+    docker logs --follow altnet
+}
+
+# function dev() {
+#    stop
+#    npx nodemon --watch 'src/**/*.*' --watch 'public/**/*.*' --exec 'npm run service'
+# }
+
+function usage() {
+    echo -e "$USAGE"
+    tput sgr0
+    exit 1
+}
+
+if ! type "$1" >/dev/null 2>&1; then usage; else $1; fi

@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 
+	"github.com/encse/altnet/lib/fs"
 	"github.com/kelseyhightower/envconfig"
 	"gopkg.in/yaml.v2"
 )
@@ -13,12 +14,12 @@ type Config struct {
 	} `yaml:"twitter"`
 }
 
-func Read(file string) (Config, error) {
+func Get() Config {
 	var cfg Config
 
-	f, err := os.Open(file)
+	f, err := os.Open(fs.WithAppRoot("config.yml"))
 	if err != nil {
-		return cfg, err
+		return cfg
 	}
 	defer f.Close()
 
@@ -26,9 +27,9 @@ func Read(file string) (Config, error) {
 	err = decoder.Decode(&cfg)
 
 	if err != nil {
-		return cfg, err
+		return cfg
 	}
 
 	err = envconfig.Process("", &cfg)
-	return cfg, err
+	return cfg
 }

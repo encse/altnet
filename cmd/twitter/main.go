@@ -8,12 +8,7 @@ import (
 )
 
 func main() {
-	config, err := config.Read("../../config.yml")
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
+	config := config.Get()
 	st, err := twitter.GetTweets(config.Twitter.AccessToken, "encse", 80)
 	if err == nil {
 		fmt.Println(st)
