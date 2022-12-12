@@ -36,7 +36,7 @@ function shell() {
 function start() {
     build
     docker run --restart always -d -p79:79 -p7979:7979 --name altnet altnet
-    echo -e 'Your containers are starting in the background. Use \033[31mservice log\033[0m to look at the logs.'
+    logs
 }
 
 function stop() {

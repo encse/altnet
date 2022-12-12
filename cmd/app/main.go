@@ -34,8 +34,12 @@ const (
 )
 
 type Conn struct {
-	send    chan byte
+	send    chan rune
 	receive chan byte
+}
+
+func (conn Conn) Close() {
+	close(conn.send)
 }
 
 func (conn Conn) Read(p []byte) (n int, err error) {
@@ -48,7 +52,7 @@ func (conn Conn) Read(p []byte) (n int, err error) {
 }
 
 func (conn Conn) Write(p []byte) (n int, err error) {
-	for _, b := range p {
+	for _, b := range []rune(string(p)) {
 		conn.send <- b
 	}
 	return len(p), nil
@@ -57,7 +61,7 @@ func (conn Conn) Write(p []byte) (n int, err error) {
 func serveWs(w http.ResponseWriter, r *http.Request) {
 	c, err := upgrader.Upgrade(w, r, nil)
 	conn := Conn{
-		send:    make(chan byte, 2048),
+		send:    make(chan rune, 2048),
 		receive: make(chan byte, 2048),
 	}
 
@@ -98,11 +102,11 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 			case message, ok := <-conn.send:
 				c.SetWriteDeadline(time.Now().Add(writeWait))
 				if !ok {
-					// The hub closed the channel.
 					c.WriteMessage(websocket.CloseMessage, []byte{})
 					return
 				}
-				err := c.WriteMessage(websocket.TextMessage, []byte{message})
+
+				err := c.WriteMessage(websocket.TextMessage, []byte(string(message)))
 				if err != nil {
 					fmt.Println(err)
 					return
@@ -118,50 +122,35 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 
 	go func() {
 		shell(conn, conn)
+		conn.Close()
 	}()
 }
 
 func shell(writer io.Writer, reader io.Reader) error {
 	// Create arbitrary command.
-	c := exec.Command("bash")
+	c := exec.Command("./bbs")
 
 	// Start the command with a pty.
-	ptmx, err := pty.Start(c)
+	ptmx, err := pty.StartWithSize(c, &pty.Winsize{Cols: 80, Rows: 25})
 	if err != nil {
 		return err
 	}
 	// Make sure to close the pty at the end.
 	defer func() { _ = ptmx.Close() }() // Best effort.
 
-	// // Set stdin in raw mode.
-	// oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// defer func() { _ = term.Restore(int(os.Stdin.Fd()), oldState) }() // Best effort.
-
-	// Copy stdin to the pty and the pty to stdout.
-	// NOTE: The goroutine will keep reading until the next keystroke before returning.
 	go func() { _, _ = io.Copy(ptmx, reader) }()
 	_, _ = io.Copy(writer, ptmx)
 
 	return nil
-
 }
+
 func main() {
-	http.Handle("/", http.FileServer(http.Dir("./public/www")))
+	http.Handle("/", http.FileServer(http.Dir("data/www")))
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
 		serveWs(w, r)
 	})
-	if err := http.ListenAndServe(":8000", nil); err != nil {
+	log.Print("listening on port 7979")
+	if err := http.ListenAndServe(":7979", nil); err != nil {
 		log.Fatal("ListenAndServe:", err)
 	}
-
-	// helloHandler := func(w http.ResponseWriter, req *http.Request) {
-	// 	io.WriteString(w, "Hello, world!\n")
-	// }
-
-	// http.HandleFunc("/hello", helloHandler)
-	// log.Println("Listing for requests at http://localhost:8000/hello")
-	// log.Fatal(http.ListenAndServe(":8000", nil))
 }

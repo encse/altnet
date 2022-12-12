@@ -63,7 +63,7 @@ func GetSkyline(githubUser string, screenWidth int) (string, error) {
 			}
 
 			if maxPerWeek >= d*j {
-				row += "#" // █
+				row += "█"
 			} else {
 				r := rand.Float32()
 				if r <= 0.025 {
