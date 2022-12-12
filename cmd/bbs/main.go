@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -12,12 +11,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/encse/altnet/lib/text"
+	"github.com/encse/altnet/lib/io"
 	"github.com/hako/durafmt"
 	"github.com/shirou/gopsutil/v3/cpu"
 	"github.com/shirou/gopsutil/v3/host"
 	"github.com/shirou/gopsutil/v3/load"
-
 	"golang.org/x/term"
 )
 
@@ -51,45 +49,20 @@ func Banner(screenWidth int) string {
 		load15 = fmt.Sprintf("%.2f", loadAvg.Load15)
 	}
 
-	fmt.Println(text.Center("Connected to CSOKAVAR, Encse's home on the web. Happy surfing.", screenWidth))
+	fmt.Println(io.Center("Connected to CSOKAVAR, Encse's home on the web. Happy surfing.", screenWidth))
 	fmt.Println()
 	fmt.Println(
-		text.Center(
+		io.Center(
 			fmt.Sprintf("Server: %v %v with %v cpu(s), load average: %v, %v, %v", arch, platform, cpus, load1, load5, load15),
 			screenWidth,
 		))
 
-	fmt.Println(text.Center(fmt.Sprintf("uptime: %v", uptime), screenWidth))
+	fmt.Println(io.Center(fmt.Sprintf("uptime: %v", uptime), screenWidth))
 	fmt.Println()
-	fmt.Println(text.Center("SysOp: encse", screenWidth))
+	fmt.Println(io.Center("SysOp: encse", screenWidth))
 	fmt.Println()
 
 	return out.String()
-}
-
-func ReadKey() (string, error) {
-	reader := bufio.NewReader(os.Stdin)
-	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
-	if err != nil {
-		panic(err)
-	}
-	defer term.Restore(int(os.Stdin.Fd()), oldState)
-	r, _, err := reader.ReadRune()
-	return string(r), err
-}
-
-func ReadOption(prompt, options string) (string, error) {
-	for {
-		fmt.Printf("Select an item [%v]:", options)
-		key, err := ReadKey()
-		if err != nil {
-			return "", err
-		}
-		fmt.Println(strings.ToLower(key))
-		if strings.Contains(strings.ToLower(options), strings.ToLower(key)) {
-			return strings.ToLower(key), nil
-		}
-	}
 }
 
 func main() {
@@ -102,11 +75,10 @@ func main() {
 
 	fmt.Println("Enter your username or GUEST")
 	fmt.Print("Username: ")
-	reader := bufio.NewReader(os.Stdin)
 
 	username := ""
 	for username == "" {
-		username, err = reader.ReadString('\n')
+		username, err = io.Readline()
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -116,7 +88,7 @@ func main() {
 	if username != "guest" {
 		for i := 0; i < 3; i++ {
 			fmt.Print("Password: ")
-			_, err = term.ReadPassword(int(syscall.Stdin))
+			_, err = io.ReadPassword()
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -142,7 +114,7 @@ loop:
 		fmt.Println(": play [I]dőrégész")
 		fmt.Println(": e[X]it")
 
-		option, err := ReadOption("Select an item", "tgcix")
+		option, err := io.ReadOption("Select an item", "tgcix")
 		if err != nil {
 			log.Fatal(err)
 		}

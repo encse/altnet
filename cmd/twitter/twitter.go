@@ -1,4 +1,4 @@
-package twitter
+package main
 
 import (
 	"encoding/json"
@@ -6,8 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	mapset "github.com/deckarep/golang-set/v2"
-	"github.com/encse/altnet/lib/text"
+	"github.com/encse/altnet/lib/io"
 )
 
 func GetTweets(twitterAccessToken string, twitterUser string, screenWidth int) (string, error) {
@@ -32,11 +31,6 @@ func GetTweets(twitterAccessToken string, twitterUser string, screenWidth int) (
 	err = json.NewDecoder(rsp.Body).Decode(&timeline)
 	if err != nil {
 		return "", err
-	}
-
-	ids := mapset.NewSet[string]()
-	for _, timelineEntry := range timeline {
-		ids.Add(timelineEntry.Id)
 	}
 
 	res := fmt.Sprintf("Latest tweets https://twitter.com/%v\n", twitterUser)
@@ -80,7 +74,7 @@ func createThread(timeline []timelineEntry, currentEntry timelineEntry) []timeli
 
 func box(txt, label string, width int) string {
 	res := "+" + strings.Repeat("-", width-2) + "+\n"
-	for _, line := range strings.Split(text.Linebreak(txt, width-4), "\n") {
+	for _, line := range strings.Split(io.Linebreak(txt, width-4), "\n") {
 		res += fmt.Sprintf("| %-*s |\n", width-4, line)
 	}
 	label = "--[" + label + "]--"
