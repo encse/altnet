@@ -12,6 +12,9 @@ type Config struct {
 	Twitter struct {
 		AccessToken string `yaml:"accessToken" envconfig:"TWITTER_ACCESS_TOKEN"`
 	} `yaml:"twitter"`
+	Memcached struct {
+		Server string `yaml:"server"`
+	} `yaml:"memcached"`
 }
 
 func Get() Config {

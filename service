@@ -20,28 +20,21 @@ USAGE='
   service \033[31mbuild\033[0m - build container
 '
 
-function build() {
-    source ./env
-    docker build \
-        --build-arg TWITTER_ACCESS_TOKEN=$TWITTER_ACCESS_TOKEN \
-        -t altnet \
-        -f Dockerfile .
-}
 
-function shell() {
-    build
-    docker run -it altnet /bin/bash
-}
+# function shell() {
+#     build
+#     docker run -it altnet /bin/bash
+# }
 
 function start() {
-    build
-    docker run --restart always -d -p79:79 -p7979:7979 --name altnet altnet
-    logs
+    docker-compose build
+    source ./env
+    docker-compose up --remove-orphans
 }
 
 function stop() {
     echo -e "stopping"
-    docker rm -f altnet
+    docker-compose down
 }
 
 function kick() {

@@ -1,0 +1,25 @@
+version: "3.2"
+volumes:
+  api:
+services:
+  altnet:
+    build: .
+    container_name: altnet
+    ports:
+      - "7979:7979"
+    environment:
+      TWITTER_ACCESS_TOKEN: ${TWITTER_ACCESS_TOKEN}
+    depends_on:
+      - memcache
+    networks:
+      - altnet_network
+  memcache:
+    image: memcached:1.4
+    container_name: memcached
+    command: ["memcached", "-m", "4048", -c, "10240", "-t", "8"]
+    networks:
+      - altnet_network
+networks:
+  altnet_network:
+    external:
+      name: altnet_network

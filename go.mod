@@ -3,6 +3,7 @@ module github.com/encse/altnet
 go 1.19
 
 require (
+	github.com/bradfitz/gomemcache v0.0.0-20221031212613-62deef7fc822 // indirect
 	github.com/creack/pty v1.1.18 // indirect
 	github.com/deckarep/golang-set v1.8.0 // indirect
 	github.com/deckarep/golang-set/v2 v2.1.0 // indirect
