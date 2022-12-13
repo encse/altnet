@@ -18,7 +18,7 @@ func GetTweets(twitterUser string, screenWidth int) (string, error) {
 
 		request, err := http.NewRequest(
 			"GET",
-			fmt.Sprintf("https://api.twitter.com/1.1/statuses/user_timeline.json?screen_name=%v&tweet_mode=extended&count=50", twitterUser),
+			fmt.Sprintf("https://api.twitter.com/1.1/statuses/user_timeline.json?screen_name=%v&tweet_mode=extended&count=20", twitterUser),
 			nil,
 		)
 

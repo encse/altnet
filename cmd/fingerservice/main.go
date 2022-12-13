@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"io/ioutil"
 	"net"
 	"strings"
@@ -18,14 +17,14 @@ func main() {
 		log.Fatal(err)
 	}
 	defer func() {
-		fmt.Println("fingerservice exit")
+		log.Info("fingerservice exit")
 		l.Close()
 	}()
 	host, port, err := net.SplitHostPort(l.Addr().String())
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("Finger service listening on host: %s, port: %s\n", host, port)
+	log.Info("Finger service listening on host: %s, port: %s\n", host, port)
 
 	for {
 		conn, err := l.Accept()
@@ -37,7 +36,7 @@ func main() {
 			buf := make([]byte, 1024)
 			len, err := conn.Read(buf)
 			if err != nil {
-				fmt.Printf("Error reading: %#v\n", err)
+				log.Errorf("Error reading: %#v", err)
 				return
 			}
 			user := strings.TrimSpace(string(buf[:len]))

@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"io"
 	"unicode/utf8"
 
@@ -102,7 +101,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 	c.SetPongHandler(func(string) error { c.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 	go func() {
 		defer func() {
-			fmt.Println("exit reader")
+			log.Info("exit reader")
 			c.Close()
 		}()
 		for {
@@ -120,7 +119,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 	go func() {
 		ticker := time.NewTicker(pingPeriod)
 		defer func() {
-			fmt.Println("exit writer")
+			log.Info("exit writer")
 			ticker.Stop()
 			c.Close()
 		}()
@@ -139,7 +138,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 					}
 					err := c.WriteMessage(websocket.TextMessage, chunk)
 					if err != nil {
-						fmt.Println(err)
+						log.Error(err)
 						return
 					}
 					chunk = chunk[:0]
@@ -187,7 +186,6 @@ func main() {
 	http.HandleFunc("/~encse", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain; charset=UTF-8")
 		st := csokavar.Finger("encse", 120)
-		fmt.Println(st)
 		w.Write([]byte(st))
 	})
 
