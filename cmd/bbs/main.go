@@ -2,76 +2,29 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
-	"log"
 	"os"
 	"os/exec"
-	"strconv"
+	"os/signal"
 	"strings"
 	"syscall"
-	"time"
 
+	"github.com/encse/altnet/lib/config"
+	"github.com/encse/altnet/lib/csokavar"
 	"github.com/encse/altnet/lib/io"
-	"github.com/hako/durafmt"
-	"github.com/shirou/gopsutil/v3/cpu"
-	"github.com/shirou/gopsutil/v3/host"
-	"github.com/shirou/gopsutil/v3/load"
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/term"
 )
 
-func Banner(screenWidth int) string {
-	var out strings.Builder
-
-	arch := "-"
-	platform := "-"
-	cpus := "-"
-	load1 := "-"
-	load5 := "-"
-	load15 := "-"
-	uptime := "-"
-
-	infoStat, err := host.Info()
-	if err == nil {
-		arch = infoStat.KernelArch
-		platform = infoStat.OS
-		uptime = fmt.Sprintf("%v", durafmt.Parse(time.Duration(infoStat.Uptime)*time.Second))
-	}
-
-	cpuCount, err := cpu.Counts(false)
-	if err == nil {
-		cpus = strconv.Itoa(cpuCount)
-	}
-
-	loadAvg, err := load.Avg()
-	if err == nil {
-		load1 = fmt.Sprintf("%.2f", loadAvg.Load1)
-		load5 = fmt.Sprintf("%.2f", loadAvg.Load5)
-		load15 = fmt.Sprintf("%.2f", loadAvg.Load15)
-	}
-
-	fmt.Println(io.Center("Connected to CSOKAVAR, Encse's home on the web. Happy surfing.", screenWidth))
-	fmt.Println()
-	fmt.Println(
-		io.Center(
-			fmt.Sprintf("Server: %v %v with %v cpu(s), load average: %v, %v, %v", arch, platform, cpus, load1, load5, load15),
-			screenWidth,
-		))
-
-	fmt.Println(io.Center(fmt.Sprintf("uptime: %v", uptime), screenWidth))
-	fmt.Println()
-	fmt.Println(io.Center("SysOp: encse", screenWidth))
-	fmt.Println()
-
-	return out.String()
-}
-
 func main() {
+
+	conf := config.Get()
+
 	screenWidth, _, err := term.GetSize(int(syscall.Stdin))
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	fmt.Println(Banner(screenWidth))
+	fmt.Println(csokavar.Banner(screenWidth))
 
 	fmt.Println("Enter your username or GUEST")
 	fmt.Print("Username: ")
@@ -82,7 +35,7 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		username = strings.TrimSpace(strings.ToLower(username))
+		username = strings.ToLower(username)
 	}
 
 	if username != "guest" {
@@ -97,61 +50,71 @@ func main() {
 		return
 	}
 
-	logo, err := ioutil.ReadFile("data/logo.txt")
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println(string(logo))
+	fmt.Println(csokavar.Logo(screenWidth))
 	fmt.Println("Welcome", username)
 
 loop:
 	for {
 		fmt.Println("BBS Menu")
 		fmt.Println("------------")
+		options := ""
 		fmt.Println(": Latest [T]weets")
+		options += "t"
 		fmt.Println(": [G]itHub skyline")
+		options += "g"
 		fmt.Println(": [C]ontact sysop")
-		fmt.Println(": play [I]dőrégész")
+		options += "c"
+		if conf.Dfrotz.Location != "" {
+			fmt.Println(": play [I]dőrégész")
+			options += "i"
+		}
 		fmt.Println(": e[X]it")
+		options += "x"
 
-		option, err := io.ReadOption("Select an item", "tgcix")
+		option, err := io.ReadOption("Select an item", options)
 		if err != nil {
 			log.Fatal(err)
 		}
 		switch strings.ToLower(option) {
 		case "t":
-			cmd := exec.Command("./twitter")
-			cmd.Stdin = os.Stdin
-			cmd.Stdout = os.Stdout
-			cmd.Stderr = os.Stderr
-			cmd.Run()
+			tweets, err := csokavar.GetTweets("encse", screenWidth)
 			if err != nil {
-				log.Fatal(err)
+				log.Error(err)
+				tweets = "Could not get tweets now."
 			}
+			fmt.Println(tweets)
 		case "g":
-			cmd := exec.Command("./githubskyline")
-			cmd.Stdin = os.Stdin
-			cmd.Stdout = os.Stdout
-			cmd.Stderr = os.Stderr
-			cmd.Run()
+			skyline, err := csokavar.GetSkyline("encse", screenWidth)
 			if err != nil {
-				log.Fatal(err)
+				log.Error(err)
+				skyline = "Could not get skyline now."
 			}
+			fmt.Println(skyline)
 		case "c":
-			cmd := exec.Command("/bin/bash")
+			gpgKey, err := csokavar.GpgKey(screenWidth)
+			if err != nil {
+				log.Error(err)
+				gpgKey = "Could not get contact info now."
+			}
+			fmt.Println(gpgKey)
+		case "i":
+			c := make(chan os.Signal, 1)
+			signal.Notify(c, os.Interrupt)
+			go func() {
+				for range c {
+					// pass
+				}
+			}()
+			cmd := exec.Command(conf.Dfrotz.Location, "-r", "lt", "-R", "/tmp", "data/doors/idoregesz.z5")
 			cmd.Stdin = os.Stdin
 			cmd.Stdout = os.Stdout
 			cmd.Stderr = os.Stderr
 			cmd.Run()
+			signal.Stop(c)
 			if err != nil {
-				log.Fatal(err)
+				log.Error(err)
+				fmt.Println("An error occured.")
 			}
-		case "i":
-			fmt.Println("idoregesz")
-			fmt.Println("idoregesz")
-			fmt.Println("idoregesz")
-			fmt.Println("idoregesz")
-			fmt.Println("idoregesz")
 		case "x":
 			break loop
 		}
@@ -159,9 +122,9 @@ loop:
 
 	fmt.Println("Have a nice day!")
 
-	footer, err := ioutil.ReadFile("data/footer.txt")
+	footer, err := csokavar.Footer(screenWidth)
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println(string(footer))
+	fmt.Println(footer)
 }

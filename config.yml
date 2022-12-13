@@ -1,4 +1,6 @@
 twitter:
   accessToken: "$TWITTER_ACCESS_TOKEN"
+dfrotz:
+  location: "$DFROTZ"
 memcached:
   server: "memcached:11211"

@@ -12,6 +12,9 @@ type Config struct {
 	Twitter struct {
 		AccessToken string `yaml:"accessToken" envconfig:"TWITTER_ACCESS_TOKEN"`
 	} `yaml:"twitter"`
+	Dfrotz struct {
+		Location string `yaml:"location" envconfig:"DFROTZ"`
+	} `yaml:"dfrotz"`
 	Memcached struct {
 		Server string `yaml:"server"`
 	} `yaml:"memcached"`

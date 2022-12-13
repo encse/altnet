@@ -13,6 +13,18 @@ services:
       - memcache
     networks:
       - altnet_network
+  finger:
+    build: .
+    container_name: finger
+    ports:
+      - "79:8000"
+    environment:
+      TWITTER_ACCESS_TOKEN: ${TWITTER_ACCESS_TOKEN}
+    depends_on:
+      - memcache
+    command: ["/usr/app/fingerservice"]
+    networks:
+      - altnet_network
   memcache:
     image: memcached:1.4
     container_name: memcached

@@ -1,4 +1,4 @@
-package main
+package csokavar
 
 import (
 	"encoding/json"
@@ -8,10 +8,11 @@ import (
 	"time"
 
 	"github.com/encse/altnet/lib/cache"
+	"github.com/encse/altnet/lib/config"
 	"github.com/encse/altnet/lib/io"
 )
 
-func GetTweets(twitterAccessToken string, twitterUser string, screenWidth int) (string, error) {
+func GetTweets(twitterUser string, screenWidth int) (string, error) {
 	return cache.Cached("tweets-for-"+twitterUser, 1*time.Hour, func() (string, error) {
 		client := &http.Client{}
 
@@ -20,11 +21,12 @@ func GetTweets(twitterAccessToken string, twitterUser string, screenWidth int) (
 			fmt.Sprintf("https://api.twitter.com/1.1/statuses/user_timeline.json?screen_name=%v&tweet_mode=extended&count=50", twitterUser),
 			nil,
 		)
+
 		if err != nil {
 			return "", err
 		}
 
-		request.Header.Add("Authorization", fmt.Sprintf("Bearer %v", twitterAccessToken))
+		request.Header.Add("Authorization", fmt.Sprintf("Bearer %v", config.Get().Twitter.AccessToken))
 		rsp, err := client.Do(request)
 		if err != nil {
 			return "", err

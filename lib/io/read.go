@@ -11,7 +11,11 @@ import (
 
 func Readline() (string, error) {
 	reader := bufio.NewReader(os.Stdin)
-	return reader.ReadString('\n')
+	st, err := reader.ReadString('\n')
+	if err != nil {
+		return st, err
+	}
+	return strings.TrimRight(st, "\n"), nil
 }
 
 func ReadPassword() (string, error) {
@@ -26,7 +30,7 @@ func ReadKey() (string, error) {
 	reader := bufio.NewReader(os.Stdin)
 	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
 	if err != nil {
-		panic(err)
+		return "", err
 	}
 	defer term.Restore(int(os.Stdin.Fd()), oldState)
 	r, _, err := reader.ReadRune()
@@ -36,12 +40,12 @@ func ReadKey() (string, error) {
 func ReadOption(prompt, options string) (string, error) {
 	for {
 		fmt.Printf("Select an item [%v]:", options)
-		key, err := ReadKey()
+		key, err := Readline()
 		if err != nil {
 			return "", err
 		}
-		fmt.Println(strings.ToLower(key))
-		if strings.Contains(strings.ToLower(options), strings.ToLower(key)) {
+		fmt.Println(len(key))
+		if len(key) == 1 && strings.Contains(strings.ToLower(options), strings.ToLower(key)) {
 			return strings.ToLower(key), nil
 		}
 	}

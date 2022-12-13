@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/creack/pty"
+	"github.com/encse/altnet/lib/csokavar"
 	"github.com/gorilla/websocket"
 )
 
@@ -149,6 +150,14 @@ func main() {
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
 		serveWs(w, r)
 	})
+
+	http.HandleFunc("/~encse", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/plain; charset=UTF-8")
+		st := csokavar.Finger("encse", 120)
+		fmt.Println(st)
+		w.Write([]byte(st))
+	})
+
 	log.Print("listening on port 7979")
 	if err := http.ListenAndServe(":7979", nil); err != nil {
 		log.Fatal("ListenAndServe:", err)
