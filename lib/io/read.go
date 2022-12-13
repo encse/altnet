@@ -44,7 +44,6 @@ func ReadOption(prompt, options string) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		fmt.Println(len(key))
 		if len(key) == 1 && strings.Contains(strings.ToLower(options), strings.ToLower(key)) {
 			return strings.ToLower(key), nil
 		}

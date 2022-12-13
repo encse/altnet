@@ -50,7 +50,11 @@ func main() {
 		return
 	}
 
-	fmt.Println(csokavar.Logo(screenWidth))
+	logo, err := csokavar.Logo(screenWidth)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(logo)
 	fmt.Println("Welcome", username)
 
 loop:

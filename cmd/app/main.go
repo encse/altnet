@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os/exec"
+	"strconv"
 	"time"
 
 	"github.com/creack/pty"
@@ -37,6 +38,7 @@ const (
 type Conn struct {
 	send    chan rune
 	receive chan byte
+	bps     int
 }
 
 func (conn Conn) Close() {
@@ -53,23 +55,47 @@ func (conn Conn) Read(p []byte) (n int, err error) {
 }
 
 func (conn Conn) Write(p []byte) (n int, err error) {
+
+	sent := 0
+	started := time.Now()
+
 	for _, b := range []rune(string(p)) {
+		if sent == conn.bps/10 {
+			timeSpent := time.Now().Sub(started)
+			if timeSpent < 100*time.Millisecond {
+				time.Sleep(100*time.Millisecond - timeSpent)
+			}
+			sent = 0
+		}
+		if sent == 0 {
+			started = time.Now()
+		}
 		conn.send <- b
+		sent++
+
 	}
 	return len(p), nil
 }
 
 func serveWs(w http.ResponseWriter, r *http.Request) {
 	c, err := upgrader.Upgrade(w, r, nil)
-	conn := Conn{
-		send:    make(chan rune, 2048),
-		receive: make(chan byte, 2048),
-	}
 
 	if err != nil {
 		log.Println(err)
 		return
 	}
+	speed, err := strconv.Atoi(c.Subprotocol())
+
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	conn := Conn{
+		send:    make(chan rune, 2048),
+		receive: make(chan byte, 2048),
+		bps:     speed / 8,
+	}
+
 	c.SetReadLimit(maxMessageSize)
 	c.SetReadDeadline(time.Now().Add(pongWait))
 	c.SetPongHandler(func(string) error { c.SetReadDeadline(time.Now().Add(pongWait)); return nil })
