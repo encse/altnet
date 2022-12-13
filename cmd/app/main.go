@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"unicode/utf8"
 
 	"net/http"
 	"os"
@@ -38,7 +39,7 @@ const (
 )
 
 type Conn struct {
-	send    chan rune
+	send    chan byte
 	receive chan byte
 	bps     int
 }
@@ -57,11 +58,9 @@ func (conn Conn) Read(p []byte) (n int, err error) {
 }
 
 func (conn Conn) Write(p []byte) (n int, err error) {
-
 	sent := 0
 	started := time.Now()
-
-	for _, b := range []rune(string(p)) {
+	for _, b := range p {
 		if sent == conn.bps/10 {
 			timeSpent := time.Now().Sub(started)
 			if timeSpent < 100*time.Millisecond {
@@ -93,7 +92,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	conn := Conn{
-		send:    make(chan rune, 2048),
+		send:    make(chan byte, 2048),
 		receive: make(chan byte, 2048),
 		bps:     speed / 8,
 	}
@@ -126,20 +125,26 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 			c.Close()
 		}()
 
+		chunk := make([]byte, 0, 4)
+
 		for {
 			select {
-			case message, ok := <-conn.send:
-				c.SetWriteDeadline(time.Now().Add(writeWait))
-				if !ok {
-					c.WriteMessage(websocket.CloseMessage, []byte{})
-					return
+			case b, ok := <-conn.send:
+				chunk = append(chunk, b)
+				if utf8.FullRune(chunk) {
+					c.SetWriteDeadline(time.Now().Add(writeWait))
+					if !ok {
+						c.WriteMessage(websocket.CloseMessage, []byte{})
+						return
+					}
+					err := c.WriteMessage(websocket.TextMessage, chunk)
+					if err != nil {
+						fmt.Println(err)
+						return
+					}
+					chunk = chunk[:0]
 				}
 
-				err := c.WriteMessage(websocket.TextMessage, []byte(string(message)))
-				if err != nil {
-					fmt.Println(err)
-					return
-				}
 			case <-ticker.C:
 				c.SetWriteDeadline(time.Now().Add(writeWait))
 				if err := c.WriteMessage(websocket.PingMessage, nil); err != nil {
