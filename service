@@ -20,15 +20,16 @@ USAGE='
   service \033[31mbuild\033[0m - build container
 '
 
-
-# function shell() {
-#     build
-#     docker run -it altnet /bin/bash
-# }
+source ./env
 
 function start() {
     docker-compose build
-    source ./env
+    docker-compose up --detach --remove-orphans
+}
+
+function dev() {
+    stop
+    docker-compose build
     docker-compose up --remove-orphans
 }
 
