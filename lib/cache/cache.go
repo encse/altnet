@@ -3,11 +3,11 @@ package cache
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/bradfitz/gomemcache/memcache"
 	"github.com/encse/altnet/lib/config"
+	log "github.com/sirupsen/logrus"
 )
 
 func Cached[T any](key string, expiration time.Duration, f func() (T, error)) (T, error) {

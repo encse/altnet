@@ -3,11 +3,11 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net"
 	"strings"
 
 	"github.com/encse/altnet/lib/csokavar"
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/text/transform"
 	"golang.org/x/text/unicode/norm"
 )

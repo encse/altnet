@@ -4,8 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
+
 	"net/http"
+	"os"
 	"os/exec"
 	"strconv"
 	"time"
@@ -13,12 +14,13 @@ import (
 	"github.com/creack/pty"
 	"github.com/encse/altnet/lib/csokavar"
 	"github.com/gorilla/websocket"
+	log "github.com/sirupsen/logrus"
 )
 
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
-	Subprotocols:    []string{"9600", "19200", "56000"},
+	Subprotocols:    []string{"2400", "4800", "9600", "14400", "19200", "28800", "33600", "56000"},
 }
 
 const (
@@ -156,7 +158,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 func shell(writer io.Writer, reader io.Reader) error {
 	// Create arbitrary command.
 	c := exec.Command("./bbs")
-
+	c.Stderr = os.Stderr
 	// Start the command with a pty.
 	ptmx, err := pty.StartWithSize(c, &pty.Winsize{Cols: 80, Rows: 25})
 	if err != nil {
