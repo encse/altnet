@@ -27,11 +27,10 @@ func main() {
 	fmt.Println(csokavar.Banner(screenWidth))
 
 	fmt.Println("Enter your username or GUEST")
-	fmt.Print("Username: ")
 
 	username := ""
 	for username == "" {
-		username, err = io.Readline()
+		username, err = io.Readline("Username: ")
 		if err != nil {
 			log.Fatal(err)
 		}

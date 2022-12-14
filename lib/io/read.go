@@ -9,7 +9,8 @@ import (
 	"golang.org/x/term"
 )
 
-func Readline() (string, error) {
+func Readline(prompt string) (string, error) {
+	fmt.Print(prompt)
 	reader := bufio.NewReader(os.Stdin)
 	st, err := reader.ReadString('\n')
 	if err != nil {
@@ -39,8 +40,7 @@ func ReadKey() (string, error) {
 
 func ReadOption(prompt, options string) (string, error) {
 	for {
-		fmt.Printf("Select an item [%v]:", options)
-		key, err := Readline()
+		key, err := Readline(fmt.Sprintf("Select an item [%v]:", options))
 		if err != nil {
 			return "", err
 		}
