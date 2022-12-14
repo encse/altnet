@@ -20,39 +20,27 @@ func main() {
 	conf := config.Get()
 
 	screenWidth, _, err := term.GetSize(int(syscall.Stdin))
-	if err != nil {
-		log.Fatal(err)
-	}
+	io.FatalIfError(err)
 
 	fmt.Println(csokavar.Banner(screenWidth))
-
 	fmt.Println("Enter your username or GUEST")
 
-	username := ""
-	for username == "" {
-		username, err = io.Readline("Username: ")
-		if err != nil {
-			log.Fatal(err)
-		}
-		username = strings.ToLower(username)
-	}
+	username, err := io.ReadNotEmpty("Username: ")
+	io.FatalIfError(err)
+
+	username = strings.ToLower(username)
 
 	if username != "guest" {
 		for i := 0; i < 3; i++ {
-			fmt.Print("Password: ")
-			_, err = io.ReadPassword()
-			if err != nil {
-				log.Fatal(err)
-			}
-			fmt.Println("")
+			_, err = io.ReadPassword("Password: ")
+			io.FatalIfError(err)
 		}
 		return
 	}
 
 	logo, err := csokavar.Logo(screenWidth)
-	if err != nil {
-		log.Fatal(err)
-	}
+	io.FatalIfError(err)
+
 	fmt.Println(logo)
 	fmt.Println("Welcome", username)
 
@@ -71,28 +59,19 @@ loop:
 			fmt.Println(": play [I]dőrégész")
 			options += "i"
 		}
+		fmt.Println(": [s]hell")
+		options += "s"
 		fmt.Println(": e[X]it")
 		options += "x"
 
 		option, err := io.ReadOption("Select an item", options)
-		if err != nil {
-			log.Fatal(err)
-		}
+		io.FatalIfError(err)
+
 		switch strings.ToLower(option) {
 		case "t":
-			tweets, err := csokavar.GetTweets("encse", screenWidth)
-			if err != nil {
-				log.Error(err)
-				tweets = "Could not get tweets now."
-			}
-			fmt.Println(tweets)
+			runCommand("./twitter", "encse")
 		case "g":
-			skyline, err := csokavar.GetSkyline("encse", screenWidth)
-			if err != nil {
-				log.Error(err)
-				skyline = "Could not get skyline now."
-			}
-			fmt.Println(skyline)
+			runCommand("./skyline", "encse")
 		case "c":
 			gpgKey, err := csokavar.GpgKey(screenWidth)
 			if err != nil {
@@ -101,23 +80,9 @@ loop:
 			}
 			fmt.Println(gpgKey)
 		case "i":
-			c := make(chan os.Signal, 1)
-			signal.Notify(c, os.Interrupt)
-			go func() {
-				for range c {
-					// pass
-				}
-			}()
-			cmd := exec.Command(conf.Dfrotz.Location, "-r", "lt", "-R", "/tmp", "data/doors/idoregesz.z5")
-			cmd.Stdin = os.Stdin
-			cmd.Stdout = os.Stdout
-			cmd.Stderr = os.Stderr
-			cmd.Run()
-			signal.Stop(c)
-			if err != nil {
-				log.Error(err)
-				fmt.Println("An error occured.")
-			}
+			runCommand(conf.Dfrotz.Location, "-r", "lt", "-R", "/tmp", "data/doors/idoregesz.z5")
+		case "s":
+			runCommand("./shell")
 		case "x":
 			break loop
 		}
@@ -127,7 +92,27 @@ loop:
 
 	footer, err := csokavar.Footer(screenWidth)
 	if err != nil {
-		log.Fatal(err)
+		log.Error(err)
+		return
 	}
 	fmt.Println(footer)
+}
+
+func runCommand(name string, arg ...string) {
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	defer signal.Stop(c)
+	go func() {
+		for range c {
+			// pass
+		}
+	}()
+	cmd := exec.Command(name, arg...)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err := cmd.Run()
+	if err != nil {
+		log.Error(err)
+	}
 }

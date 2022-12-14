@@ -13,6 +13,7 @@ import (
 
 	"github.com/creack/pty"
 	"github.com/encse/altnet/lib/csokavar"
+	ioutil "github.com/encse/altnet/lib/io"
 	"github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"
 )
@@ -191,6 +192,6 @@ func main() {
 
 	log.Print("listening on port 7979")
 	if err := http.ListenAndServe(":7979", nil); err != nil {
-		log.Fatal("ListenAndServe:", err)
+		ioutil.FatalIfError(err)
 	}
 }

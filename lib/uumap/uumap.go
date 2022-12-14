@@ -1,48 +1,13 @@
-package main
+package uumap
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
-	"os"
-	"strings"
-
-	"github.com/encse/altnet/lib/io"
-	log "github.com/sirupsen/logrus"
 )
 
 type Uumap = map[string]struct {
 	Entry string   `json:"entry"`
 	Hosts []string `json:"hosts"`
-}
-
-func main() {
-	host := ""
-	if len(os.Args) > 1 {
-		host = os.Args[1]
-	}
-
-	for host == "" {
-		var err error
-		host, err = io.Readline("host: ")
-		if err != nil {
-			log.Fatal(err)
-		}
-		host = strings.ToLower(host)
-	}
-
-	uumap, err := GetUumap()
-	if err != nil {
-		log.Error(err)
-		fmt.Println("couldn't load uumap database")
-		return
-	}
-	if entry, ok := uumap[host]; ok {
-		fmt.Println(entry.Entry)
-	} else {
-		fmt.Println("host not found")
-	}
-
 }
 
 func GetUumap() (Uumap, error) {

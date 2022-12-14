@@ -2,17 +2,18 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/encse/altnet/lib/csokavar"
-	log "github.com/sirupsen/logrus"
+	"github.com/encse/altnet/lib/io"
 )
 
 func main() {
+	user, err := io.ReadArg("user", os.Args, 1)
+	io.FatalIfError(err)
 
-	st, err := csokavar.GetSkyline("encse", 120)
-	if err != nil {
-		log.Error(err)
-		return
-	}
+	st, err := csokavar.GetSkyline(user, 120)
+	io.FatalIfError(err, fmt.Sprintf("Cannnot get skyline for %s now.", user))
+
 	fmt.Println(st)
 }

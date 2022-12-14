@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/encse/altnet/lib/csokavar"
+	"github.com/encse/altnet/lib/io"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/text/transform"
 	"golang.org/x/text/unicode/norm"
@@ -13,24 +14,19 @@ import (
 
 func main() {
 	l, err := net.Listen("tcp", ":8000")
-	if err != nil {
-		log.Fatal(err)
-	}
+	io.FatalIfError(err)
 	defer func() {
 		log.Info("fingerservice exit")
 		l.Close()
 	}()
 	host, port, err := net.SplitHostPort(l.Addr().String())
-	if err != nil {
-		log.Fatal(err)
-	}
+	io.FatalIfError(err)
+
 	log.Info("Finger service listening on host: %s, port: %s\n", host, port)
 
 	for {
 		conn, err := l.Accept()
-		if err != nil {
-			log.Fatal(err)
-		}
+		io.FatalIfError(err)
 
 		go func(conn net.Conn) {
 			buf := make([]byte, 1024)

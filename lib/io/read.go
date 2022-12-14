@@ -2,12 +2,61 @@ package io
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
+	stdio "io"
 	"os"
 	"strings"
 
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/term"
 )
+
+func FatalIfError(err error, message ...any) {
+
+	if errors.Is(err, stdio.EOF) {
+		os.Exit(0)
+	}
+
+	if err != nil {
+		if len(message) > 0 {
+			fmt.Println(message...)
+		} else {
+			fmt.Println("An error occurred.")
+		}
+		log.Error(err)
+		os.Exit(1)
+	}
+}
+
+func ReadArg(prompt string, args []string, iarg int) (string, error) {
+	arg := ""
+	if len(args) > iarg {
+		arg = args[iarg]
+	}
+
+	if arg == "" {
+		var err error
+		arg, err = ReadNotEmpty(prompt + ":")
+		if err != nil {
+			return "", err
+		}
+	}
+	return arg, nil
+}
+
+func ReadNotEmpty(prompt string) (string, error) {
+	for {
+		res, err := Readline(prompt)
+		if err != nil {
+			return "", err
+		}
+		res = strings.TrimSpace(res)
+		if res != "" {
+			return res, nil
+		}
+	}
+}
 
 func Readline(prompt string) (string, error) {
 	fmt.Print(prompt)
@@ -19,11 +68,13 @@ func Readline(prompt string) (string, error) {
 	return strings.TrimRight(st, "\n"), nil
 }
 
-func ReadPassword() (string, error) {
+func ReadPassword(prompt string) (string, error) {
+	fmt.Print(prompt)
 	res, err := term.ReadPassword(int(os.Stdin.Fd()))
 	if err != nil {
 		return "", err
 	}
+	fmt.Println()
 	return string(res), nil
 }
 
