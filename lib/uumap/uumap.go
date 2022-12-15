@@ -28,7 +28,7 @@ func GetUumap() (Uumap, error) {
 
 func FindPaths(network Uumap, sourceHost string, targetHost string, maxLength int, maxCount int) [][]string {
 	res := make([][]string, 0)
-	findPaths(network, targetHost, maxLength, []string{}, sourceHost, &res)
+	findPaths(network, targetHost, maxLength, make([]string, 0, maxLength), sourceHost, &res)
 	sort.SliceStable(res, func(i, j int) bool {
 		return len(res[i]) < len(res[j])
 	})
@@ -46,12 +46,12 @@ func findPaths(network Uumap, targetHost string, maxLength int, path []string, h
 	}
 	path = append(path, host)
 	if host == targetHost {
-		*allPaths = append(*allPaths, path)
+		res := make([]string, len(path))
+		copy(res, path)
+		*allPaths = append(*allPaths, res)
 	} else if entry, ok := network[host]; ok {
 		for _, hostNext := range entry.Hosts {
-			pathNext := make([]string, len(path), len(path)+1)
-			copy(pathNext, path)
-			findPaths(network, targetHost, maxLength, pathNext, hostNext, allPaths)
+			findPaths(network, targetHost, maxLength, path, hostNext, allPaths)
 		}
 	}
 }

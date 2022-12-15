@@ -19,41 +19,27 @@ func main() {
 
 	targetHost = strings.ToLower(targetHost)
 
+	fmt.Println("loading nodes")
 	network, err := uumap.GetUumap()
 	io.FatalIfError(err)
 
-	network["home"] = uumap.Uunode{
-		Entry: "",
-		Hosts: []string{
-			"adaptex",
-			"aemsrc",
-			"attvcr",
-			"bpsm",
-			"flux",
-			"grex",
-			"mimsy",
-			"oddjob",
-			"oracle",
-			"tandem",
-			"veritas",
-		},
-	}
-
 	startHost := "home"
 
+	fmt.Println("finding paths")
 	res := uumap.FindPaths(network, startHost, targetHost, 5, 6)
 
 	if len(res) == 0 {
 		fmt.Println("no path to host")
 		return
 	}
-
+	fmt.Println("collecting edges")
 	sb := strings.Builder{}
 
 	for edge := range getEdges(res, startHost, targetHost).Iter() {
 		sb.WriteString(edge)
 	}
 
+	fmt.Println("rendering")
 	cmd := exec.Command("/usr/bin/graph-easy")
 	cmd.Stdin = strings.NewReader(sb.String())
 	cmd.Stdout = os.Stdout

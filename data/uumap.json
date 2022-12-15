@@ -1,4 +1,20 @@
 {
+    "home": {
+        "entry": "",
+        "hosts": [
+            "adaptex",
+            "aemsrc",
+            "attvcr",
+            "bpsm",
+            "flux",
+            "grex",
+            "mimsy",
+            "oddjob",
+            "oracle",
+            "tandem",
+            "veritas"
+        ]
+    },
     "3comvax": {
         "entry": "#N\t.3com.com, 3comvax\n#F\tsun.com\n#O\t3Com Corporation\n#C\tMarc Lavine\n#E\tmarcl@vax.3Com.Com\n#T\t+1 408 970 1857\n#P\t3165 Kifer Road, Santa Clara, CA 95052-8145, USA\n#L\t37 21 N / 121 56 W city\n#U\toliveb bridge2 cygnet csi tymix excelan\n#R\tregistered\n#W\tmarcl@vax.3Com.Com (Marc Lavine); Thu Jul 14 14:44:01 PDT 1988\n#\n#\tUsers on our internal 3+ internetwork can be reached via a mail\n#\tgateway.  For example, to reach Marc Lavine:HQ:3Com, use the\n#\taddress Marc_Lavine@HQ.3Com.Com.  If your mailer can't handle\n#\tthat, use {3comvax|sun|oliveb}!HQ.3Com.Com!Marc_Lavine.\n#\n3comvax  .3com.com\n3comvax = 3com.com\nbridge2 = bridge2.3com.com\ncsi\t .csi.3com.com\ncsi\t= csi.3com.com\n3comvax acad(DEMAND), bnrmtv(WEEKLY/2), bridge2(DEDICATED), csi(DIRECT),\n\tcygnet(EVENING), decwrl(DEMAND), excelan(POLLED/2), hpda(DIRECT),\n\tlotus(DEMAND), mdc(POLLED), microsoft(DEMAND), oliveb(DIRECT),\n\tsun(DIRECT), tymix(DIRECT)\n\n",
         "hosts": [

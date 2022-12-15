@@ -1,8 +1,8 @@
 package tools
 
-func Contains(rgst []string, st string) bool {
-	for _, a := range rgst {
-		if a == st {
+func Contains[T comparable](rgt []T, t T) bool {
+	for _, a := range rgt {
+		if a == t {
 			return true
 		}
 	}
