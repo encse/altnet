@@ -21,12 +21,15 @@ func main() {
 		if len(parts) > 0 {
 			switch parts[0] {
 			case "?", "help":
-				fmt.Println("uumap")
-				fmt.Println("twitter")
-				fmt.Println("skyline")
+				fmt.Println("uumap <host>\tshow uumap entry for a host")
+				fmt.Println("uuplot <host>\tplot uupath to a host")
+				fmt.Println("twitter <user>\tshow the latest tweets of a Twitter user")
+				fmt.Println("skyline <user> \tshow the GitHub contributions chart for a GitHub user")
 				break
 			case "uumap":
 				runCommand("./uumap", parts[1:]...)
+			case "uuplot":
+				runCommand("./uuplot", parts[1:]...)
 			case "twitter":
 				runCommand("./twitter", parts[1:]...)
 			case "skyline":
@@ -57,4 +60,5 @@ func runCommand(name string, arg ...string) {
 	if err != nil {
 		log.Error(err)
 	}
+	fmt.Println()
 }

@@ -3,12 +3,17 @@ package uumap
 import (
 	"encoding/json"
 	"io/ioutil"
+	"sort"
+
+	"github.com/encse/altnet/lib/tools"
 )
 
-type Uumap = map[string]struct {
+type Uunode = struct {
 	Entry string   `json:"entry"`
 	Hosts []string `json:"hosts"`
 }
+
+type Uumap = map[string]Uunode
 
 func GetUumap() (Uumap, error) {
 	uumapBytes, err := ioutil.ReadFile("data/uumap.json")
@@ -21,25 +26,32 @@ func GetUumap() (Uumap, error) {
 	return uumap, err
 }
 
-// func foo() {
-// 	uumap, _ := GetUumap()
+func FindPaths(network Uumap, sourceHost string, targetHost string, maxLength int, maxCount int) [][]string {
+	res := make([][]string, 0)
+	findPaths(network, targetHost, maxLength, []string{}, sourceHost, &res)
+	sort.SliceStable(res, func(i, j int) bool {
+		return len(res[i]) < len(res[j])
+	})
 
-// 	hostsBytes, _ := ioutil.ReadFile("data/hosts")
-// 	hosts := string(hostsBytes)
-// 	res := Uumap{}
-// 	for _, line := range strings.Split(hosts, "\n") {
-// 		parts := strings.Split(strings.TrimSpace(line), " ")
-// 		host := parts[0]
-// 		if entry, ok := uumap[host]; ok {
-// 			res[host] = entry
-// 		} else {
-// 			fmt.Println(host)
-// 		}
-// 	}
+	if len(res) > maxCount {
+		return res[:maxCount]
+	} else {
+		return res
+	}
+}
 
-// 	bytes, err := json.MarshalIndent(res, "", "    ")
-// 	if err != nil {
-// 		log.Error("ERROR: fail to marshall json, %w", err.Error())
-// 	}
-// 	ioutil.WriteFile("data/uumap.json", bytes, 0666)
-// }
+func findPaths(network Uumap, targetHost string, maxLength int, path []string, host string, allPaths *([][]string)) {
+	if tools.Contains(path, host) || len(path) > maxLength {
+		return
+	}
+	path = append(path, host)
+	if host == targetHost {
+		*allPaths = append(*allPaths, path)
+	} else if entry, ok := network[host]; ok {
+		for _, hostNext := range entry.Hosts {
+			pathNext := make([]string, len(path), len(path)+1)
+			copy(pathNext, path)
+			findPaths(network, targetHost, maxLength, pathNext, hostNext, allPaths)
+		}
+	}
+}
