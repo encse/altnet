@@ -8,8 +8,8 @@ import (
 
 	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/encse/altnet/lib/io"
+	"github.com/encse/altnet/lib/log"
 	"github.com/encse/altnet/lib/uumap"
-	log "github.com/sirupsen/logrus"
 )
 
 func main() {

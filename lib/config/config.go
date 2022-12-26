@@ -18,6 +18,9 @@ type Config struct {
 	Memcached struct {
 		Server string `yaml:"server"`
 	} `yaml:"memcached"`
+	Connection struct {
+		From string `envconfig:"CONNECTED_FROM"`
+	}
 }
 
 func Get() Config {

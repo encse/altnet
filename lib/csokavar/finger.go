@@ -3,7 +3,7 @@ package csokavar
 import (
 	"strings"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/encse/altnet/lib/log"
 )
 
 func Finger(user string, screenWidth int) string {

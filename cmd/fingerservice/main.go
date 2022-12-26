@@ -7,7 +7,7 @@ import (
 
 	"github.com/encse/altnet/lib/csokavar"
 	"github.com/encse/altnet/lib/io"
-	log "github.com/sirupsen/logrus"
+	"github.com/encse/altnet/lib/log"
 	"golang.org/x/text/transform"
 	"golang.org/x/text/unicode/norm"
 )

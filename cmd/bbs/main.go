@@ -11,7 +11,7 @@ import (
 	"github.com/encse/altnet/lib/config"
 	"github.com/encse/altnet/lib/csokavar"
 	"github.com/encse/altnet/lib/io"
-	log "github.com/sirupsen/logrus"
+	"github.com/encse/altnet/lib/log"
 	"golang.org/x/term"
 )
 
@@ -38,6 +38,7 @@ func main() {
 		return
 	}
 
+	log.Infof("Connected as %s", username)
 	logo, err := csokavar.Logo(screenWidth)
 	io.FatalIfError(err)
 
@@ -99,6 +100,7 @@ loop:
 }
 
 func runCommand(name string, arg ...string) {
+	log.Info("run", name, arg)
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 	defer signal.Stop(c)

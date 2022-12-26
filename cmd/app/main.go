@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"unicode/utf8"
 
@@ -14,8 +15,8 @@ import (
 	"github.com/creack/pty"
 	"github.com/encse/altnet/lib/csokavar"
 	ioutil "github.com/encse/altnet/lib/io"
+	log "github.com/encse/altnet/lib/log"
 	"github.com/gorilla/websocket"
-	log "github.com/sirupsen/logrus"
 )
 
 var upgrader = websocket.Upgrader{
@@ -39,9 +40,10 @@ const (
 )
 
 type Conn struct {
-	send    chan byte
-	receive chan byte
-	bps     int
+	send          chan byte
+	receive       chan byte
+	bps           int
+	connectedFrom string
 }
 
 func (conn Conn) Close() {
@@ -92,14 +94,17 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	connectedFrom := ""
 	if items := r.Header["X-Real-Ip"]; len(items) > 0 {
-		log.Info("Connected from ", items[0])
+		connectedFrom = items[0]
 	}
+	log.Info("Connected from  ", connectedFrom)
 
 	conn := Conn{
-		send:    make(chan byte, 2048),
-		receive: make(chan byte, 2048),
-		bps:     speed / 8,
+		send:          make(chan byte, 2048),
+		receive:       make(chan byte, 2048),
+		bps:           speed / 8,
+		connectedFrom: connectedFrom,
 	}
 
 	c.SetReadLimit(maxMessageSize)
@@ -160,14 +165,15 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	go func() {
-		shell(conn, conn)
+		shell(conn)
 		conn.Close()
 	}()
 }
 
-func shell(writer io.Writer, reader io.Reader) error {
+func shell(conn Conn) error {
 	// Create arbitrary command.
 	c := exec.Command("./bbs")
+	c.Env = append(c.Env, fmt.Sprintf("AN_FROM=%s", conn.connectedFrom))
 	c.Stderr = os.Stderr
 	// Start the command with a pty.
 	ptmx, err := pty.StartWithSize(c, &pty.Winsize{Cols: 80, Rows: 25})
@@ -177,8 +183,8 @@ func shell(writer io.Writer, reader io.Reader) error {
 	// Make sure to close the pty at the end.
 	defer func() { _ = ptmx.Close() }() // Best effort.
 
-	go func() { _, _ = io.Copy(ptmx, reader) }()
-	_, _ = io.Copy(writer, ptmx)
+	go func() { _, _ = io.Copy(ptmx, conn) }()
+	_, _ = io.Copy(conn, ptmx)
 
 	return nil
 }

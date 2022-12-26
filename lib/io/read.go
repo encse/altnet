@@ -8,7 +8,7 @@ import (
 	"os"
 	"strings"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/encse/altnet/lib/log"
 	"golang.org/x/term"
 )
 
