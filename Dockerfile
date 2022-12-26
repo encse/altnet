@@ -12,6 +12,7 @@ FROM golang:latest AS gobuilder
 WORKDIR /src
 COPY go.mod .
 COPY go.sum .
+RUN go mod download
 COPY cmd ./cmd
 COPY lib ./lib
 RUN go install ./cmd/...
