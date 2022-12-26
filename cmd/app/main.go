@@ -91,7 +91,11 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 		return
 	}
-	log.Info("Connected from ", r.RemoteAddr)
+
+	if items := r.Header["X-Real-Ip"]; len(items) > 0 {
+		log.Info("Connected from ", items[0])
+	}
+
 	conn := Conn{
 		send:    make(chan byte, 2048),
 		receive: make(chan byte, 2048),
