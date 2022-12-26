@@ -10,7 +10,12 @@ var logger *logrus.Entry
 func init() {
 	conf := config.Get()
 	log := logrus.New()
-	logger = log.WithFields(logrus.Fields{"connectedFrom": conf.Connection.From})
+	logger = logrus.NewEntry(log)
+	if conf.Connection.From != "" {
+		logger = logger.WithFields(
+			logrus.Fields{"connectedFrom": conf.Connection.From},
+		)
+	}
 }
 
 func Trace(args ...interface{}) {
