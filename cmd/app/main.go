@@ -91,6 +91,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 		return
 	}
+	log.Info("Connected from ", r.RemoteAddr)
 	conn := Conn{
 		send:    make(chan byte, 2048),
 		receive: make(chan byte, 2048),
