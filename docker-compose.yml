@@ -13,6 +13,10 @@ services:
       - memcache
     networks:
       - altnet_network
+    volumes:
+      - type: bind
+        source: ./data
+        target: /usr/app/data
   finger:
     build: .
     container_name: finger
@@ -25,6 +29,10 @@ services:
     command: ["/usr/app/fingerservice"]
     networks:
       - altnet_network
+    volumes:
+      - type: bind
+        source: ./data
+        target: /usr/app/data
   memcache:
     image: memcached:1.4
     container_name: memcached

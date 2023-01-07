@@ -81,7 +81,7 @@ loop:
 			}
 			fmt.Println(gpgKey)
 		case "i":
-			runCommand(conf.Dfrotz.Location, "-r", "lt", "-R", "/tmp", "data/doors/idoregesz.z5")
+			runCommand(conf.Dfrotz.Location, "-R", "/tmp", "data/doors/idoregesz.z5")
 		case "s":
 			runCommand("./shell")
 		case "x":
