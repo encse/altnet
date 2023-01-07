@@ -2,9 +2,6 @@ package main
 
 import (
 	"fmt"
-	"os"
-	"os/exec"
-	"os/signal"
 	"strings"
 	"syscall"
 
@@ -70,9 +67,9 @@ loop:
 
 		switch strings.ToLower(option) {
 		case "t":
-			runCommand("./twitter", "encse")
+			csokavar.RunCommand("./twitter", "encse")
 		case "g":
-			runCommand("./skyline", "encse")
+			csokavar.RunCommand("./skyline", "encse")
 		case "c":
 			gpgKey, err := csokavar.GpgKey(screenWidth)
 			if err != nil {
@@ -81,9 +78,9 @@ loop:
 			}
 			fmt.Println(gpgKey)
 		case "i":
-			runCommand(conf.Dfrotz.Location, "-R", "/tmp", "data/doors/idoregesz.z5")
+			csokavar.RunCommand("./zrun", "idoregesz")
 		case "s":
-			runCommand("./shell")
+			csokavar.RunCommand("./shell")
 		case "x":
 			break loop
 		}
@@ -97,24 +94,4 @@ loop:
 		return
 	}
 	fmt.Println(footer)
-}
-
-func runCommand(name string, arg ...string) {
-	log.Info("run", name, arg)
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
-	defer signal.Stop(c)
-	go func() {
-		for range c {
-			// pass
-		}
-	}()
-	cmd := exec.Command(name, arg...)
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	err := cmd.Run()
-	if err != nil {
-		log.Error(err)
-	}
 }

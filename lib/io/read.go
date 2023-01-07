@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/encse/altnet/lib/log"
+	"golang.org/x/exp/slices"
 	"golang.org/x/term"
 )
 
@@ -43,6 +44,35 @@ func ReadArg(prompt string, args []string, iarg int) (string, error) {
 		}
 	}
 	return arg, nil
+}
+
+func ReadArgFromList(prompt string, args []string, iarg int, options []string) (string, error) {
+	arg := ""
+	if len(args) > iarg {
+		arg = args[iarg]
+	}
+
+	if slices.Contains(options, arg) {
+		return arg, nil
+	}
+
+	for {
+		var err error
+		arg, err = ReadNotEmpty(prompt + " (? for list): ")
+		if err != nil {
+			return "", err
+		}
+
+		if slices.Contains(options, arg) {
+			return arg, err
+		}
+
+		if arg == "?" {
+			for _, option := range options {
+				fmt.Println(option)
+			}
+		}
+	}
 }
 
 func ReadNotEmpty(prompt string) (string, error) {
