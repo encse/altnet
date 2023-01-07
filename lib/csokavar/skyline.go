@@ -14,22 +14,22 @@ import (
 type GithubActivity struct {
 	Username      string                `json:"username"`
 	Year          string                `json:"year"`
-	Min           float32               `json:"min"`
-	Max           float32               `json:"max"`
-	Median        float32               `json:"median"`
-	P80           float32               `json:"p80"`
-	P90           float32               `json:"p90"`
-	P99           float32               `json:"p99"`
+	Min           float64               `json:"min"`
+	Max           float64               `json:"max"`
+	Median        float64               `json:"median"`
+	P80           float64               `json:"p80"`
+	P90           float64               `json:"p90"`
+	P99           float64               `json:"p99"`
 	Contributions []GithubContributions `json:"contributions"`
 }
 
 type GithubContributions struct {
-	Week int        `json:"week"`
+	Week float64    `json:"week"`
 	Days []DayCount `json:"days"`
 }
 
 type DayCount struct {
-	Count int `json:"count"`
+	Count float64 `json:"count"`
 }
 
 func GetSkyline(githubUser string, screenWidth int) (string, error) {
@@ -57,17 +57,17 @@ func GetSkyline(githubUser string, screenWidth int) (string, error) {
 		for j := 8; j >= 0; j-- {
 			row := ""
 			for _, contibution := range githubActivity.Contributions {
-				maxPerWeek := 0
+				maxPerWeek := 0.0
 				for _, day := range contibution.Days {
 					if day.Count > maxPerWeek {
 						maxPerWeek = day.Count
 					}
 				}
 
-				if maxPerWeek >= d*j {
+				if maxPerWeek >= d*float64(j) {
 					row += "█"
 				} else {
-					r := rand.Float32()
+					r := rand.Float64()
 					if r <= 0.025 {
 						row += "*"
 					} else if r <= 0.050 {
