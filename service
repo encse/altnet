@@ -20,6 +20,7 @@ USAGE='
   service \033[31mbuild\033[0m - build container
 '
 
+export DOCKER_BUILDKIT=1 
 source ./env
 
 function start() {
