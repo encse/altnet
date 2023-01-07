@@ -1,14 +1,18 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
+	"github.com/encse/altnet/lib/altnet"
 	"github.com/encse/altnet/lib/csokavar"
 	"github.com/encse/altnet/lib/io"
 )
 
 func main() {
+	ctx := altnet.ContextFromEnv(context.Background())
+
 	for {
 		cmd, err := io.ReadNotEmpty("> ")
 		io.FatalIfError(err)
@@ -23,17 +27,20 @@ func main() {
 				fmt.Println("twitter <user>\tshow the latest tweets of a Twitter user")
 				fmt.Println("skyline <user> \tshow the GitHub contributions chart for a GitHub user")
 				fmt.Println("zrun <game>\tplay Z-machine games")
+				fmt.Println("ls <glob>\tlist files")
 				break
 			case "zrun":
-				csokavar.RunCommand("./zrun", parts[1:]...)
+				csokavar.RunCommand(ctx, "./zrun", parts[1:]...)
 			case "uumap":
-				csokavar.RunCommand("./uumap", parts[1:]...)
+				csokavar.RunCommand(ctx, "./uumap", parts[1:]...)
 			case "uuplot":
-				csokavar.RunCommand("./uuplot", parts[1:]...)
+				csokavar.RunCommand(ctx, "./uuplot", parts[1:]...)
 			case "twitter":
-				csokavar.RunCommand("./twitter", parts[1:]...)
+				csokavar.RunCommand(ctx, "./twitter", parts[1:]...)
 			case "skyline":
-				csokavar.RunCommand("./skyline", parts[1:]...)
+				csokavar.RunCommand(ctx, "./skyline", parts[1:]...)
+			case "ls":
+				csokavar.RunCommand(ctx, "./ls", parts[1:]...)
 			case "exit", "quit":
 				return
 			default:

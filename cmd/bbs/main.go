@@ -1,10 +1,12 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"syscall"
 
+	"github.com/encse/altnet/lib/altnet"
 	"github.com/encse/altnet/lib/config"
 	"github.com/encse/altnet/lib/csokavar"
 	"github.com/encse/altnet/lib/io"
@@ -13,7 +15,7 @@ import (
 )
 
 func main() {
-
+	ctx := altnet.ContextFromEnv(context.Background())
 	conf := config.Get()
 
 	screenWidth, _, err := term.GetSize(int(syscall.Stdin))
@@ -26,7 +28,6 @@ func main() {
 	io.FatalIfError(err)
 
 	username = strings.ToLower(username)
-
 	if username != "guest" {
 		for i := 0; i < 3; i++ {
 			_, err = io.ReadPassword("Password: ")
@@ -34,6 +35,7 @@ func main() {
 		}
 		return
 	}
+	ctx = altnet.SetUser(ctx, altnet.User(username))
 
 	log.Infof("Connected as %s", username)
 	logo, err := csokavar.Logo(screenWidth)
@@ -67,9 +69,9 @@ loop:
 
 		switch strings.ToLower(option) {
 		case "t":
-			csokavar.RunCommand("./twitter", "encse")
+			csokavar.RunCommand(ctx, "./twitter", "encse")
 		case "g":
-			csokavar.RunCommand("./skyline", "encse")
+			csokavar.RunCommand(ctx, "./skyline", "encse")
 		case "c":
 			gpgKey, err := csokavar.GpgKey(screenWidth)
 			if err != nil {
@@ -78,9 +80,9 @@ loop:
 			}
 			fmt.Println(gpgKey)
 		case "i":
-			csokavar.RunCommand("./zrun", "idoregesz")
+			csokavar.RunCommand(ctx, "./zrun", "idoregesz")
 		case "s":
-			csokavar.RunCommand("./shell")
+			csokavar.RunCommand(ctx, "./shell")
 		case "x":
 			break loop
 		}

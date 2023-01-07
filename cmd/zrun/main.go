@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -8,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/encse/altnet/lib/altnet"
 	"github.com/encse/altnet/lib/config"
 	"github.com/encse/altnet/lib/csokavar"
 	"github.com/encse/altnet/lib/io"
@@ -18,6 +20,8 @@ import (
 const gamesDir = "data/doors"
 
 func main() {
+	ctx := altnet.ContextFromEnv(context.Background())
+
 	conf := config.Get()
 	if conf.Dfrotz.Location == "" {
 		fmt.Println("Zrun config is missing.")
@@ -42,5 +46,5 @@ func main() {
 
 	name, err := io.ReadArgFromList("game", os.Args, 1, maps.Keys(games))
 	io.FatalIfError(err)
-	csokavar.RunCommand(conf.Dfrotz.Location, "-q", "-R", "/tmp", games[name])
+	csokavar.RunCommand(ctx, conf.Dfrotz.Location, "-q", "-R", "/tmp", games[name])
 }

@@ -173,7 +173,11 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 func shell(conn Conn) error {
 	// Create arbitrary command.
 	c := exec.Command("./bbs")
-	c.Env = append(os.Environ(), fmt.Sprintf("CONNECTED_FROM=%s", conn.connectedFrom))
+	c.Env = os.Environ()
+	c.Env = append(os.Environ(),
+		fmt.Sprintf("CONNECTED_FROM=%s", conn.connectedFrom),
+		fmt.Sprintf("ALTNET_HOST=%s", "home"),
+	)
 	c.Stderr = os.Stderr
 	// Start the command with a pty.
 	ptmx, err := pty.StartWithSize(c, &pty.Winsize{Cols: 80, Rows: 25})

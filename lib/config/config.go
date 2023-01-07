@@ -3,7 +3,6 @@ package config
 import (
 	"os"
 
-	"github.com/encse/altnet/lib/fs"
 	"github.com/kelseyhightower/envconfig"
 	"gopkg.in/yaml.v2"
 )
@@ -26,7 +25,7 @@ type Config struct {
 func Get() Config {
 	var cfg Config
 
-	f, err := os.Open(fs.WithAppRoot("config.yml"))
+	f, err := os.Open("config.yml")
 	if err != nil {
 		return cfg
 	}
