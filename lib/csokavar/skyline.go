@@ -14,9 +14,9 @@ import (
 type GithubActivity struct {
 	Username      string                `json:"username"`
 	Year          string                `json:"year"`
-	Min           int                   `json:"min"`
-	Max           int                   `json:"max"`
-	Median        int                   `json:"median"`
+	Min           float32               `json:"min"`
+	Max           float32               `json:"max"`
+	Median        float32               `json:"median"`
 	P80           float32               `json:"p80"`
 	P90           float32               `json:"p90"`
 	P99           float32               `json:"p99"`
