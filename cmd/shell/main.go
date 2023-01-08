@@ -28,6 +28,7 @@ func main() {
 				fmt.Println("skyline <user> \tshow the GitHub contributions chart for a GitHub user")
 				fmt.Println("zrun <game>\tplay Z-machine games")
 				fmt.Println("ls <glob>\tlist files")
+				fmt.Println("cat <file>\tprint file contents")
 				break
 			case "zrun":
 				csokavar.RunCommand(ctx, "./zrun", parts[1:]...)
@@ -41,6 +42,8 @@ func main() {
 				csokavar.RunCommand(ctx, "./skyline", parts[1:]...)
 			case "ls":
 				csokavar.RunCommand(ctx, "./ls", parts[1:]...)
+			case "cat":
+				csokavar.RunCommand(ctx, "./cat", parts[1:]...)
 			case "exit", "quit":
 				return
 			default:
