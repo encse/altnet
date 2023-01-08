@@ -8,7 +8,7 @@ import (
 )
 
 func Footer(screenWidth int) (string, error) {
-	footer, err := ioutil.ReadFile("data/footer.txt")
+	footer, err := ioutil.ReadFile("data/altnet/csokavar/footer.txt")
 	if err != nil {
 		return "", fmt.Errorf("Could not get footer, %w", err)
 	}

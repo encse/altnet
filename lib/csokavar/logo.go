@@ -8,7 +8,7 @@ import (
 )
 
 func Logo(screenWidth int) (string, error) {
-	logo, err := ioutil.ReadFile("data/logo.txt")
+	logo, err := ioutil.ReadFile("data/altnet/csokavar/logo.txt")
 	if err != nil {
 		return "", fmt.Errorf("Could not get logo, %w", err)
 	}

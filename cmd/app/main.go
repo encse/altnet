@@ -176,7 +176,7 @@ func shell(conn Conn) error {
 	c.Env = os.Environ()
 	c.Env = append(os.Environ(),
 		fmt.Sprintf("CONNECTED_FROM=%s", conn.connectedFrom),
-		fmt.Sprintf("ALTNET_HOST=%s", "home"),
+		fmt.Sprintf("ALTNET_HOST=%s", "csokavar"),
 	)
 	c.Stderr = os.Stderr
 	// Start the command with a pty.
