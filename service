@@ -43,6 +43,10 @@ function kick() {
     stop && start 
 }
 
+function shell() {
+    docker exec -it altnet /bin/bash
+}
+
 function logs() {
     docker logs --follow altnet
 }
