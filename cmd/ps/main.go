@@ -15,19 +15,19 @@ func main() {
 	host, err := altnet.GetHost(ctx)
 	io.FatalIfError(err)
 
-	fmt.Printf("HOST %s PROCESS TABLE\n", strings.ToUpper(string(host)))
 	procinfos, err := altnet.GetProcesses(host)
 	io.FatalIfError(err)
+
+	fmt.Printf("HOST %s PROCESS TABLE\n", strings.ToUpper(string(host)))
 	fmt.Printf("%d running processes\n", len(procinfos))
 	fmt.Println()
-
-	table := [][]string{
+	proctable := [][]string{
 		{"pid", "user", "started", "program"},
 		{"---", "----", "-------", "-------"},
 	}
 
 	for _, procinfo := range procinfos {
-		table = append(table,
+		proctable = append(proctable,
 			[]string{
 				fmt.Sprintf("%v", procinfo.Pid),
 				fmt.Sprintf("%v", procinfo.User),
@@ -36,7 +36,7 @@ func main() {
 			},
 		)
 	}
-	fmt.Println(io.Table(table...))
+	fmt.Println(io.Table(proctable...))
 }
 
 func formatDate(t time.Time) string {
