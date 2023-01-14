@@ -3,6 +3,7 @@ package altnet
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 )
 
@@ -10,6 +11,7 @@ type key string
 
 const hostKey key = "ALTNET_HOST"
 const userKey key = "ALTNET_USER"
+const exeKey key = "ALTNET_EXE"
 
 type Host string
 type User string
@@ -17,12 +19,12 @@ type User string
 func ContextToEnv(env []string, ctx context.Context) []string {
 	user, err := GetUser(ctx)
 	if err == nil {
-		env = append(env, string(userKey), string(user))
+		env = append(env, fmt.Sprintf("%v=%v", userKey, user))
 	}
 
 	host, err := GetHost(ctx)
 	if err == nil {
-		env = append(env, string(hostKey), string(host))
+		env = append(env, fmt.Sprintf("%v=%v", hostKey, host))
 	}
 	return env
 }

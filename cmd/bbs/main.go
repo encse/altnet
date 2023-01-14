@@ -82,7 +82,7 @@ loop:
 		case "i":
 			csokavar.RunCommand(ctx, "./zrun", "idoregesz")
 		case "s":
-			csokavar.RunCommand(ctx, "./shell")
+			csokavar.RunHiddenCommand(ctx, "./shell")
 		case "x":
 			break loop
 		}

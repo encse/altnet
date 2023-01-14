@@ -46,5 +46,5 @@ func main() {
 
 	name, err := io.ReadArgFromList("game", os.Args, 1, maps.Keys(games))
 	io.FatalIfError(err)
-	csokavar.RunCommand(ctx, conf.Dfrotz.Location, "-q", "-R", "/tmp", games[name])
+	csokavar.RunHiddenCommand(ctx, conf.Dfrotz.Location, "-q", "-R", "/tmp", games[name])
 }

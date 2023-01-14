@@ -22,14 +22,17 @@ func main() {
 		if len(parts) > 0 {
 			switch parts[0] {
 			case "?", "help":
+				fmt.Println("cat <file>\tprint file contents")
+				fmt.Println("ls <glob>\tlist files")
+				fmt.Println("ps\tshow running processes on this host")
+				fmt.Println("skyline <user> \tshow the GitHub contributions chart for a GitHub user")
+				fmt.Println("twitter <user>\tshow the latest tweets of a Twitter user")
 				fmt.Println("uumap <host>\tshow uumap entry for a host")
 				fmt.Println("uuplot <host>\tplot uupath to a host")
-				fmt.Println("twitter <user>\tshow the latest tweets of a Twitter user")
-				fmt.Println("skyline <user> \tshow the GitHub contributions chart for a GitHub user")
 				fmt.Println("zrun <game>\tplay Z-machine games")
-				fmt.Println("ls <glob>\tlist files")
-				fmt.Println("cat <file>\tprint file contents")
 				break
+			case "ps":
+				csokavar.RunCommand(ctx, "./ps", parts[1:]...)
 			case "zrun":
 				csokavar.RunCommand(ctx, "./zrun", parts[1:]...)
 			case "uumap":
