@@ -20,17 +20,23 @@ func main() {
 	io.FatalIfError(err)
 	fmt.Printf("%d running processes\n", len(procinfos))
 	fmt.Println()
-	fmt.Println("pid\tuser\tstarted\tprogram")
-	fmt.Println("---\t----\t-------\t-------")
+
+	table := [][]string{
+		{"pid", "user", "started", "program"},
+		{"---", "----", "-------", "-------"},
+	}
+
 	for _, procinfo := range procinfos {
-		fmt.Printf(
-			"%v\t%v\t%v\t%v\n",
-			procinfo.Pid,
-			procinfo.User,
-			formatDate(procinfo.Started),
-			procinfo.Exe,
+		table = append(table,
+			[]string{
+				fmt.Sprintf("%v", procinfo.Pid),
+				fmt.Sprintf("%v", procinfo.User),
+				formatDate(procinfo.Started),
+				fmt.Sprintf("%v", procinfo.Exe),
+			},
 		)
 	}
+	fmt.Println(io.Table(table...))
 }
 
 func formatDate(t time.Time) string {
