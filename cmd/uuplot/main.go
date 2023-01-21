@@ -1,32 +1,40 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
 	"strings"
 
 	mapset "github.com/deckarep/golang-set/v2"
+	"github.com/encse/altnet/lib/altnet"
 	"github.com/encse/altnet/lib/io"
 	"github.com/encse/altnet/lib/log"
 	"github.com/encse/altnet/lib/uumap"
 )
 
 func main() {
+	ctx := altnet.ContextFromEnv(context.Background())
+	host, err := altnet.GetHost(ctx)
+	io.FatalIfError(err)
 
 	targetHost, err := io.ReadArg("host", os.Args, 1)
 	io.FatalIfError(err)
 
 	targetHost = strings.ToLower(targetHost)
 
-	fmt.Println("loading nodes")
+	log.Info("loading nodes")
 	network, err := uumap.GetUumap()
 	io.FatalIfError(err)
 
-	startHost := "home"
+	if _, ok := network[targetHost]; !ok {
+		fmt.Println("unknown host", targetHost)
+		return
+	}
 
-	fmt.Println("finding paths")
-	res := uumap.FindPaths(network, startHost, targetHost, 5, 6)
+	log.Info("finding paths")
+	res := uumap.FindPaths(network, string(host), targetHost, 3)
 
 	if len(res) == 0 {
 		fmt.Println("no path to host")
@@ -35,7 +43,7 @@ func main() {
 	fmt.Println("collecting edges")
 	sb := strings.Builder{}
 
-	for edge := range getEdges(res, startHost, targetHost).Iter() {
+	for edge := range getEdges(res, string(host), targetHost).Iter() {
 		sb.WriteString(edge)
 	}
 

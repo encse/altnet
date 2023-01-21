@@ -43,6 +43,10 @@ function kick() {
     stop && start 
 }
 
+function console() {
+    docker exec -e ALTNET_HOST=csokavar -e ALTNET_USER=guest -it altnet ./shell
+}
+
 function shell() {
     docker exec -it altnet /bin/bash
 }

@@ -1,16 +1,16 @@
 package uumap
 
 import (
+	"container/list"
 	"encoding/json"
 	"io/ioutil"
-	"sort"
 
-	"github.com/encse/altnet/lib/tools"
+	mapset "github.com/deckarep/golang-set/v2"
 )
 
 type Uunode = struct {
 	Entry string   `json:"entry"`
-	Hosts []string `json:"hosts"`
+	Hosts []string `json:"neighbours"`
 }
 
 type Uumap = map[string]Uunode
@@ -23,35 +23,49 @@ func GetUumap() (Uumap, error) {
 
 	var uumap Uumap
 	err = json.Unmarshal(uumapBytes, &uumap)
+
+	uumap["csokavar"] = Uunode{
+		Hosts: []string{
+			"oddjob",
+			"adaptex",
+			"aemsrc",
+			"attvcr",
+			"bpsm",
+			"tandem",
+			"oracle",
+			"veritas",
+			"mimsy",
+		},
+	}
 	return uumap, err
 }
 
-func FindPaths(network Uumap, sourceHost string, targetHost string, maxLength int, maxCount int) [][]string {
+func FindPaths(network Uumap, sourceHost string, targetHost string, maxCount int) [][]string {
 	res := make([][]string, 0)
-	findPaths(network, targetHost, maxLength, make([]string, 0, maxLength), sourceHost, &res)
-	sort.SliceStable(res, func(i, j int) bool {
-		return len(res[i]) < len(res[j])
-	})
+	q := list.New()
+	q.PushBack([]string{sourceHost})
+	seen := mapset.NewSet[string]()
 
-	if len(res) > maxCount {
-		return res[:maxCount]
-	} else {
-		return res
-	}
-}
+	for len(res) < maxCount && q.Len() > 0 {
+		path := q.Front().Value.([]string)
+		q.Remove(q.Front())
 
-func findPaths(network Uumap, targetHost string, maxLength int, path []string, host string, allPaths *([][]string)) {
-	if tools.Contains(path, host) || len(path) > maxLength {
-		return
-	}
-	path = append(path, host)
-	if host == targetHost {
-		res := make([]string, len(path))
-		copy(res, path)
-		*allPaths = append(*allPaths, res)
-	} else if entry, ok := network[host]; ok {
-		for _, hostNext := range entry.Hosts {
-			findPaths(network, targetHost, maxLength, path, hostNext, allPaths)
+		host := path[len(path)-1]
+		seen.Add(host)
+
+		if host == targetHost {
+			res = append(res, path)
+		} else if entry, ok := network[host]; ok {
+			for _, hostNext := range entry.Hosts {
+				if !seen.Contains(hostNext) {
+					res := make([]string, len(path), len(path)+1)
+					copy(res, path)
+					res = append(res, hostNext)
+					q.PushBack(res)
+				}
+			}
 		}
 	}
+
+	return res
 }
