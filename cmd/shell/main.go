@@ -24,7 +24,9 @@ func main() {
 			case "?", "help":
 				fmt.Println(io.Table(
 					[]string{"cat <file>", "print file contents"},
+					[]string{"hosts", "show a list of hosts on the network"},
 					[]string{"ls <glob>", "list files"},
+					[]string{"netstat", "show connected hosts"},
 					[]string{"ps ", "show running processes on this host"},
 					[]string{"skyline <user>", "show the GitHub contributions chart for a GitHub user"},
 					[]string{"twitter <user>", "show the latest tweets of a Twitter user"},
@@ -33,6 +35,10 @@ func main() {
 					[]string{"zrun <game>", "play Z-machine games"},
 				))
 				break
+			case "hosts":
+				csokavar.RunCommand(ctx, "./hosts", parts[1:]...)
+			case "netstat":
+				csokavar.RunCommand(ctx, "./netstat", parts[1:]...)
 			case "ps":
 				csokavar.RunCommand(ctx, "./ps", parts[1:]...)
 			case "zrun":

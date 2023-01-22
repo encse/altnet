@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/encse/altnet/lib/log"
-	"golang.org/x/exp/slices"
+	"github.com/encse/altnet/lib/slices"
 	"golang.org/x/term"
 )
 

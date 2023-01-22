@@ -14,12 +14,12 @@ func Table(lines ...[]string) string {
 			}
 		}
 	}
-
+	var colsep = 2
 	var res []string
 	for _, columns := range lines {
 		line := ""
 		for icol, col := range columns {
-			line += col + strings.Repeat(" ", colWidth[icol]-len(col)+1)
+			line += col + strings.Repeat(" ", colWidth[icol]-len(col)+colsep)
 		}
 		res = append(res, line)
 	}

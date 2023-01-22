@@ -6,11 +6,21 @@ import (
 	"io/ioutil"
 
 	mapset "github.com/deckarep/golang-set/v2"
+	"github.com/encse/altnet/lib/altnet"
 )
 
 type Uunode = struct {
-	Entry string   `json:"entry"`
-	Hosts []string `json:"neighbours"`
+	Entry          string      `json:"entry"`
+	Hosts          []string    `json:"neighbours"`
+	Country        string      `json:"country"`
+	HostName       altnet.Host `json:"system-name"`
+	MachineType    string      `json:"machine-type"`
+	Organization   string      `json:"organization"`
+	Contact        string      `json:"contact"`
+	ContactAddress string      `json:"contact-address"`
+	Phone          []string    `json:"phone"`
+	Location       string      `json:"location"`
+	GeoLocation    string      `json:"geo-location"`
 }
 
 type Uumap = map[string]Uunode
@@ -29,7 +39,6 @@ func GetUumap() (Uumap, error) {
 			"oddjob",
 			"adaptex",
 			"aemsrc",
-			"attvcr",
 			"bpsm",
 			"tandem",
 			"oracle",
