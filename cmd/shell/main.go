@@ -12,9 +12,10 @@ import (
 
 func main() {
 	ctx := altnet.ContextFromEnv(context.Background())
-
+	host, err := altnet.GetHost(ctx)
+	io.FatalIfError(err)
 	for {
-		cmd, err := io.ReadNotEmpty("> ")
+		cmd, err := io.ReadNotEmpty(fmt.Sprintf("%v$ ", host))
 		io.FatalIfError(err)
 
 		cmd = strings.TrimSpace(cmd)
@@ -29,6 +30,7 @@ func main() {
 					[]string{"netstat", "show connected hosts"},
 					[]string{"ps ", "show running processes on this host"},
 					[]string{"skyline <user>", "show the GitHub contributions chart for a GitHub user"},
+					[]string{"telnet <host>", "connect to a host in netstat"},
 					[]string{"twitter <user>", "show the latest tweets of a Twitter user"},
 					[]string{"uumap <host>", "show uumap entry for a host"},
 					[]string{"uuplot <host>", "plot uupath to a host"},
@@ -37,6 +39,8 @@ func main() {
 				break
 			case "hosts":
 				csokavar.RunCommand(ctx, "./hosts", parts[1:]...)
+			case "telnet":
+				csokavar.RunCommand(ctx, "./telnet", parts[1:]...)
 			case "netstat":
 				csokavar.RunCommand(ctx, "./netstat", parts[1:]...)
 			case "ps":
