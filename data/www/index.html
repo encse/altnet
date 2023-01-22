@@ -82,7 +82,7 @@
             terminalDiv = document.getElementById('terminal');
             terminalDiv.innerHTML = '';
             var term = new XtermIo(terminalDiv);
-            for (let ch of "\x1b[37mdialing ATDT (511) 746-7888\n") {
+            for (let ch of "dialing ATDT (511) 746-7888\n") {
                 term.write(ch);
             }
 

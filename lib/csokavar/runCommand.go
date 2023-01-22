@@ -9,6 +9,7 @@ import (
 	"path"
 
 	"github.com/encse/altnet/lib/altnet"
+	"github.com/encse/altnet/lib/io"
 	"github.com/encse/altnet/lib/log"
 )
 
@@ -44,4 +45,6 @@ func runAs(ctx context.Context, hidden bool, name string, arg ...string) {
 	if err != nil {
 		log.Error(err)
 	}
+
+	io.Freshline()
 }
