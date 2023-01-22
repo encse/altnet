@@ -10,7 +10,10 @@
             "request": "launch",
             "mode": "auto",
             "cwd": "${workspaceFolder}",
-            "program": "${fileDirname}"
-        } 
+            "program": "${fileDirname}",
+            "env": {
+                "ALTNET_HOST": "csokavar"
+            }
+        }
     ]
 }
