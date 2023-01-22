@@ -10,6 +10,7 @@ import (
 	"github.com/encse/altnet/lib/csokavar"
 	"github.com/encse/altnet/lib/io"
 	"github.com/encse/altnet/lib/log"
+	"github.com/encse/altnet/lib/slices"
 	"github.com/encse/altnet/lib/uumap"
 )
 
@@ -27,14 +28,26 @@ func main() {
 		return
 	}
 
-	targetHost, err := io.ReadArgFromList("host", os.Args, 1, entry.Hosts)
-	io.FatalIfError(err)
+	targetHost := ""
+	if len(os.Args) > 1 {
+		targetHost = os.Args[1]
+	} else {
+		targetHost, err = io.ReadArgFromList("host", os.Args, 1, entry.Hosts)
+		io.FatalIfError(err)
+	}
 
-	fmt.Println(fmt.Sprintf("Connected to %s", strings.ToUpper(string(targetHost))))
+	targetHost = strings.ToLower(targetHost)
+
+	if !slices.Contains(entry.Hosts, targetHost) {
+		fmt.Println("host not in NETSTAT")
+		return
+	}
+
+	fmt.Println(fmt.Sprintf("Connected to %s", strings.ToUpper(targetHost)))
 	fmt.Println()
 	fmt.Println("Enter your username or GUEST")
 
-	username, err := io.ReadNotEmpty("Username: ")
+	username, err := io.ReadNotEmpty("Login: ")
 	io.FatalIfError(err)
 
 	username = strings.ToLower(username)
@@ -43,13 +56,13 @@ func main() {
 			_, err = io.ReadPassword("Password: ")
 			io.FatalIfError(err)
 		}
-		return
-	}
-	ctx = altnet.SetHost(ctx, altnet.Host(targetHost))
-	ctx = altnet.SetUser(ctx, altnet.User(username))
+	} else {
+		ctx = altnet.SetHost(ctx, altnet.Host(targetHost))
+		ctx = altnet.SetUser(ctx, altnet.User(username))
 
-	log.Infof("Connected as %s", username)
-	fmt.Println("Welcome", username)
-	csokavar.RunHiddenCommand(ctx, "./shell")
+		log.Infof("Connected as %s", username)
+		fmt.Println("Welcome", username)
+		csokavar.RunHiddenCommand(ctx, "./shell")
+	}
 	fmt.Println("Connection closed")
 }
