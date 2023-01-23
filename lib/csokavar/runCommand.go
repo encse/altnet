@@ -47,9 +47,9 @@ func runAs(ctx context.Context, hidden bool, name string, arg ...string) {
 	}
 
 	io.Freshline()
+
 	err = io.Sane()
 	if err != nil {
 		log.Error(err)
 	}
-
 }

@@ -5,17 +5,14 @@ import (
 	"sort"
 
 	"github.com/encse/altnet/lib/io"
+	"github.com/encse/altnet/lib/maps"
 	"github.com/encse/altnet/lib/uumap"
 )
 
 func main() {
 	uumap, err := uumap.GetUumap()
 	io.FatalIfError(err)
-
-	keys := make([]string, 0, len(uumap))
-	for k := range uumap {
-		keys = append(keys, k)
-	}
+	keys := maps.Keys(uumap)
 	sort.Strings(keys)
 
 	rows := make([][]string, 0, len(uumap)+2)
