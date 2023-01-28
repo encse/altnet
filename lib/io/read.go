@@ -17,8 +17,8 @@ type UserFriendlyError struct {
 	Err error
 }
 
-func (e *UserFriendlyError) Error() string { return e.Err.Error() }
-func (e *UserFriendlyError) Unwrap() error { return e.Err }
+func (e UserFriendlyError) Error() string { return e.Err.Error() }
+func (e UserFriendlyError) Unwrap() error { return e.Err }
 
 func FatalIfError(err error, message ...any) {
 	if errors.Is(err, stdio.EOF) {
@@ -28,7 +28,7 @@ func FatalIfError(err error, message ...any) {
 	if err != nil {
 		if len(message) > 0 {
 			fmt.Println(message...)
-		} else if uerr, ok := err.(*UserFriendlyError); ok {
+		} else if uerr, ok := err.(UserFriendlyError); ok {
 			fmt.Println(uerr.Error())
 		} else {
 			fmt.Println("An error occurred.")

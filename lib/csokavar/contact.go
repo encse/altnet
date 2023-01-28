@@ -8,7 +8,7 @@ import (
 )
 
 func GpgKey(screenWidth int) (string, error) {
-	key, err := ioutil.ReadFile("data/altnet/csokavar/encse.gpg")
+	key, err := ioutil.ReadFile("data/altnet/csokavar/sys/encse.gpg")
 	if err != nil {
 		return "", fmt.Errorf("Could not get gpg key, %w", err)
 	}

@@ -12,7 +12,8 @@
             "cwd": "${workspaceFolder}",
             "program": "${fileDirname}",
             "env": {
-                "ALTNET_HOST": "csokavar"
+                "ALTNET_HOST": "mimsy",
+                "ALTNET_USER": "guest"
             }
         }
     ]

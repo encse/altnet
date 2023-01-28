@@ -1,2 +1,10 @@
 env
+
+# /*
+# !/foo
+# /foo/*
+# !/foo/bar
+
 data/textfiles
+data/altnet/*
+!/data/altnet/csokavar
