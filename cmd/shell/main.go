@@ -11,6 +11,7 @@ import (
 )
 
 var commands = [][]string{
+	{"ansi <file>", "ansi file (*.ans) viewer"},
 	{"cat <file>", "print file contents"},
 	{"hosts", "show a list of hosts on the network"},
 	{"ls <glob>", "list files"},
