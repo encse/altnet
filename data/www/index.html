@@ -97,7 +97,6 @@
 
                 const host = new URL("/ws", document.location);
                 host.protocol = host.protocol.replace('http', 'ws');
-                host.port = 7979;
 
                 const params = new URL(document.location).searchParams
                 let connection = new WebSocket(`${host}`, speed)
