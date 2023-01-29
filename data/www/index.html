@@ -6,7 +6,8 @@
     <meta property="og:description" content="How things worked 40 years ago">
     <meta property="og:url" content="https://finger.csokavar.hu">
 
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-fork-ribbon-css/0.2.3/gh-fork-ribbon.min.css" />
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/github-fork-ribbon-css/0.2.3/gh-fork-ribbon.min.css" />
     <style>
         * {
             font-family: monospace;
@@ -16,19 +17,20 @@
             color: #009900;
         }
 
-        
+
         html {
             color: #d3d7cf;
-            background: black;
+            background: #2e3436;
             font-size: 15px;
         }
 
         #app {
-            height:100vh;
+            height: 100vh;
             width: 100vw;
             display: flex;
             flex-direction: column;
         }
+
         #terminal {
             flex: auto;
         }
@@ -36,87 +38,96 @@
 </head>
 
 <body>
-    <a class="github-fork-ribbon" href="https://github.com/encse/finger" data-ribbon="Fork me on GitHub" title="Fork me on GitHub">Fork me on GitHub</a>
+    <a class="github-fork-ribbon" href="https://github.com/encse/finger" data-ribbon="Fork me on GitHub"
+        title="Fork me on GitHub">Fork me on GitHub</a>
     <div id="app">
         <div id="header">
             Connection speed: <a href="#9600">9600</a>, <a href="#19200">19200</a>, <a href="#56000">56000</a>
         </div>
-        <div id="terminal"></pre>
-    </div>
-    <link rel="stylesheet" href="https://unpkg.com/xterm@5.0.0/css/xterm.css" />
-    <script src="https://unpkg.com/xterm@5.0.0/lib/xterm.js"></script>
-    <script src="https://unpkg.com/xterm-addon-fit@0.6.0/lib/xterm-addon-fit.js"></script>
-    <script src="https://unpkg.com/xterm-addon-web-links@0.7.0/lib/xterm-addon-web-links.js"></script>
-    <script>
-        addEventListener('hashchange', run);
+        <div id="terminal">
+            </pre>
+        </div>
+        <link rel="stylesheet" href="https://unpkg.com/xterm@5.0.0/css/xterm.css" />
+        <script src="https://unpkg.com/xterm@5.0.0/lib/xterm.js"></script>
+        <script src="https://unpkg.com/xterm-addon-fit@0.6.0/lib/xterm-addon-fit.js"></script>
+        <script src="https://unpkg.com/xterm-addon-web-links@0.7.0/lib/xterm-addon-web-links.js"></script>
+        <script>
+            addEventListener('hashchange', run);
 
-        class XtermIo {
+            class XtermIo {
 
-            constructor(element) {
-                this.term = new Terminal({
-                    allowProposedApi: true,
-                    theme: {
-                        foreground: '#00ff33',
-                    },
+                constructor(element) {
+                    this.term = new Terminal({
+                        allowProposedApi: true,
+                        theme: {
+                            background: '#2e3436',
+                        },
+                    });
+                    this.term.open(element);
+                    const fitAddon = new FitAddon.FitAddon();
+                    this.term.loadAddon(fitAddon);
+                    this.term.loadAddon(new WebLinksAddon.WebLinksAddon());
+                    fitAddon.fit();
+                    let dims = fitAddon.proposeDimensions()
+                    this.term.resize(80, dims.rows);
+
+                }
+
+                write(msg) {
+                    if (msg instanceof ArrayBuffer) {
+                        this.term.write(new Uint8Array(msg));
+                    } else {
+                        this.term.write(msg)
+                    }
+                }
+            }
+
+            async function run() {
+                if (location.hash == '') {
+                    return;
+                }
+                const speed = location.hash.substring(1);
+
+                terminalDiv = document.getElementById('terminal');
+                terminalDiv.innerHTML = '';
+                var term = new XtermIo(terminalDiv);
+                for (let ch of "dialing ATDT (511) 746-7888\n") {
+                    term.write(ch);
+                }
+
+                const host = new URL("/ws", document.location);
+                host.protocol = host.protocol.replace('http', 'ws');
+                host.port = 7979;
+
+                const params = new URL(document.location).searchParams
+                let connection = new WebSocket(`${host}`, speed)
+                connection.binaryType = "arraybuffer";
+
+                let closed = false;
+                connection.onopen = (e) => {
+                    term.write(`CONNECT ${speed}\n\r`);
+                }
+
+                connection.onerror = (e) => {
+                    term.write(`ERROR\n\r`);
+                }
+
+                connection.onmessage = (e) => {
+                    term.write(e.data);
+                }
+
+                connection.onclose = (e) => {
+                    term.write(`NO CARRIER\n\r%disconnected\n\r`);
+                    closed = true;
+                }
+
+                term.term.onData((e) => {
+                    connection.send(e);
                 });
-                this.term.open(element);
-                const fitAddon = new FitAddon.FitAddon();
-                this.term.loadAddon(fitAddon);
-                this.term.loadAddon(new WebLinksAddon.WebLinksAddon());
-                fitAddon.fit();
-                this.windowWidth = Math.min(80, this.term.cols - 1);
             }
-           
-            write(text) {
-                text = text.replace(/\n/g,'\r\n');
-                this.term.write(text);
-            }
-        }
+            run();
 
-        async function run() {
-            if (location.hash == '') {
-                return;
-            }
-            const speed = location.hash.substring(1);
-
-            terminalDiv = document.getElementById('terminal');
-            terminalDiv.innerHTML = '';
-            var term = new XtermIo(terminalDiv);
-            for (let ch of "dialing ATDT (511) 746-7888\n") {
-                term.write(ch);
-            }
-
-            const host = new URL("/ws", document.location);
-            host.protocol = host.protocol.replace('http', 'ws');
-
-            const params = new URL(document.location).searchParams
-            let connection = new WebSocket(`${host}`, speed)
-
-            let closed = false;
-            connection.onopen = (e) => {
-                term.write(`CONNECT ${speed}\n`);
-            }
-
-            connection.onerror = (e) => {
-                term.write(`ERROR\n`);
-            }
-
-            connection.onmessage = async (e) => {
-                term.write(e.data);
-            }
-
-            connection.onclose = async (e) => {
-                term.write(`NO CARRIER\n%disconnected\n`);
-                closed = true;
-            }
-
-            term.term.onData((e) => {
-                connection.send(e);
-            });
-        }
-        run();
-
-    </script>
+        </script>
 </body>
 
 </html>

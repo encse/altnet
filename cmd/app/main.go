@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"unicode/utf8"
 
 	"net/http"
 	"os"
@@ -135,28 +134,18 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 			c.Close()
 		}()
 
-		chunk := make([]byte, 0, 4)
-
 		for {
 			select {
 			case b, ok := <-conn.send:
-				chunk = append(chunk, b)
-				if utf8.FullRune(chunk) {
-					if !utf8.Valid(chunk) {
-						chunk = chunk[:0]
-						chunk = append(chunk, 0xef, 0xbf, 0xbd)
-					}
-					c.SetWriteDeadline(time.Now().Add(writeWait))
-					if !ok {
-						c.WriteMessage(websocket.CloseMessage, []byte{})
-						return
-					}
-					err := c.WriteMessage(websocket.TextMessage, chunk)
-					if err != nil {
-						log.Error(err)
-						return
-					}
-					chunk = chunk[:0]
+				c.SetWriteDeadline(time.Now().Add(writeWait))
+				if !ok {
+					c.WriteMessage(websocket.CloseMessage, []byte{})
+					return
+				}
+				err := c.WriteMessage(websocket.BinaryMessage, []byte{b})
+				if err != nil {
+					log.Error(err)
+					return
 				}
 
 			case <-ticker.C:
