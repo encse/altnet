@@ -13,6 +13,6 @@ func Freshline() {
 		fmt.Println()
 	}
 	if pos.Column != 1 {
-		fmt.Println(bold + inverse + "%" + reset)
+		fmt.Println(Bold + Inverse + "%" + Reset)
 	}
 }

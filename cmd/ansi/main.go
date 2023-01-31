@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"os"
 
 	"github.com/encse/altnet/lib/altnet"
@@ -17,5 +18,6 @@ func main() {
 
 	fi, err := altnet.GetFileInfo(ctx, name)
 	io.FatalIfError(err)
+	fmt.Print(io.ClearScreen + io.Home)
 	csokavar.RunHiddenCommand(ctx, "/usr/bin/iconv", "-f", "437", "-t", "UTF-8", fi.RealPath())
 }

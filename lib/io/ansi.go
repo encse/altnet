@@ -1,8 +1,10 @@
 package io
 
 const (
-	escape  = "\033"
-	bold    = escape + "[1m"
-	inverse = escape + "[7m"
-	reset   = escape + "[0m"
+	Escape      = "\033"
+	Bold        = Escape + "[1m"
+	Inverse     = Escape + "[7m"
+	Reset       = Escape + "[0m"
+	ClearScreen = Escape + "[2J"
+	Home        = Escape + "[H"
 )

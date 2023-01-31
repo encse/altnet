@@ -17,7 +17,7 @@ type Position struct {
 
 func GetCursorPosition() (Position, error) {
 
-	cmd := escape + "[6n"
+	cmd := Escape + "[6n"
 
 	fd := int(os.Stdin.Fd())
 
@@ -46,7 +46,7 @@ func GetCursorPosition() (Position, error) {
 		}
 		st += string(buf[:n])
 
-		e := escape + "\\[(\\d+);(\\d+)R"
+		e := Escape + "\\[(\\d+);(\\d+)R"
 		r := regexp.MustCompile(e)
 
 		m := r.FindStringSubmatchIndex(st)
