@@ -17,6 +17,7 @@ services:
       - type: bind
         source: ./data
         target: /usr/app/data
+    user: ${CURRENT_UID}
   finger:
     build: .
     container_name: finger
@@ -33,12 +34,14 @@ services:
       - type: bind
         source: ./data
         target: /usr/app/data
+    user: ${CURRENT_UID}
   memcache:
     image: memcached:1.4
     container_name: memcached
     command: [ "memcached", "-m", "4048", -c, "10240", "-t", "8" ]
     networks:
       - altnet_network
+    user: ${CURRENT_UID}
 networks:
   altnet_network:
     external:
