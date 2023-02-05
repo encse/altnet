@@ -42,3 +42,23 @@ func Take[E comparable](s []E, n int) []E {
 	copy(s[:n], res)
 	return res
 }
+
+func Chunk[E any](items []E, chunkSize int) [][]E {
+	var chunks [][]E
+	for i := 0; i < len(items); i += chunkSize {
+		end := i + chunkSize
+		if end > len(items) {
+			end = len(items)
+		}
+		chunks = append(chunks, items[i:end])
+	}
+	return chunks
+}
+
+func Map[A any, B any](items []A, f func(a A) B) []B {
+	res := make([]B, 0, len(items))
+	for _, a := range items {
+		res = append(res, f(a))
+	}
+	return res
+}

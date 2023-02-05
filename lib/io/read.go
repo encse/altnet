@@ -6,6 +6,7 @@ import (
 	"fmt"
 	stdio "io"
 	"os"
+	"runtime"
 	"strings"
 
 	"github.com/encse/altnet/lib/log"
@@ -33,7 +34,8 @@ func FatalIfError(err error, message ...any) {
 		} else {
 			fmt.Println("An error occurred.")
 		}
-		log.Error(err)
+		_, filename, line, _ := runtime.Caller(1)
+		log.Errorf("[error] %s:%d %v", filename, line, err)
 		os.Exit(1)
 	}
 }
