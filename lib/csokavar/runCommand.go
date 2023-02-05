@@ -52,4 +52,6 @@ func runAs(ctx context.Context, hidden bool, name string, arg ...string) {
 	if err != nil {
 		log.Error(err)
 	}
+	fmt.Print("\033[?47l")                  // alternate screen buffer off
+	fmt.Print("\033]1337;SetColumns=0\007") // reset columns to screen width
 }
