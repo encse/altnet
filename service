@@ -31,7 +31,7 @@ function start() {
 function dev() {
     stop
     docker-compose build
-    CURRENT_UID=$(id -u):$(id -g) docker-compose -f docker-compose.yml -f docker-compose.dev.yml up --remove-orphans -d
+    CURRENT_UID=0:0 docker-compose -f docker-compose.yml -f docker-compose.dev.yml up --remove-orphans -d
 }
 
 # start with ./service dev, then run ./service gobuild to rebuild all cmds

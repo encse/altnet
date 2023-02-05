@@ -19,7 +19,6 @@ func main() {
 
 	columns, _, err := term.GetSize(int(syscall.Stdin))
 	io.FatalIfError(err)
-	fmt.Println(columns)
 
 	names := slices.Map(files, func(fi altnet.FileInfo) string {
 		return fi.Name()
