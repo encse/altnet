@@ -26,7 +26,7 @@ services:
       TWITTER_ACCESS_TOKEN: ${TWITTER_ACCESS_TOKEN}
     depends_on:
       - memcache
-    command: ["/usr/app/fingerservice"]
+    command: [ "/usr/app/fingerservice" ]
     networks:
       - altnet_network
     volumes:
@@ -36,7 +36,7 @@ services:
   memcache:
     image: memcached:1.4
     container_name: memcached
-    command: ["memcached", "-m", "4048", -c, "10240", "-t", "8"]
+    command: [ "memcached", "-m", "4048", -c, "10240", "-t", "8" ]
     networks:
       - altnet_network
 networks:

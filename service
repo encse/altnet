@@ -31,7 +31,12 @@ function start() {
 function dev() {
     stop
     docker-compose build
-    docker-compose up --remove-orphans
+    docker-compose -f docker-compose.yml -f docker-compose.dev.yml up --remove-orphans -d
+}
+
+# start with ./service dev, then run ./service gobuild to rebuild all cmds
+function gobuild() {
+    docker exec -w /src altnet  go install ./cmd/...
 }
 
 function stop() {
@@ -39,26 +44,21 @@ function stop() {
     docker-compose down
 }
 
-function kick() {
-    stop && start 
+function restart() {
+    stop && start
 }
 
 function console() {
     docker exec -e ALTNET_HOST=csokavar -e ALTNET_USER=guest -it altnet ./shell
 }
 
-function shell() {
+function bash() {
     docker exec -it altnet /bin/bash
 }
 
 function logs() {
     docker logs --follow altnet
 }
-
-# function dev() {
-#    stop
-#    npx nodemon --watch 'src/**/*.*' --watch 'public/**/*.*' --exec 'npm run service'
-# }
 
 function usage() {
     echo -e "$USAGE"
