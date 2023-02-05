@@ -3,11 +3,14 @@ package main
 import (
 	"context"
 	"fmt"
+	stdio "io"
+	"os"
 	"strings"
 
 	"github.com/encse/altnet/lib/altnet"
 	"github.com/encse/altnet/lib/csokavar"
 	"github.com/encse/altnet/lib/io"
+	"golang.org/x/term"
 )
 
 var commands = [][]string{
@@ -30,11 +33,18 @@ func main() {
 	host, err := altnet.GetHost(ctx)
 	io.FatalIfError(err)
 
-	for {
-		cmd, err := io.ReadNotEmpty(fmt.Sprintf("%v$ ", host))
-		io.FatalIfError(err)
+	screen := struct {
+		stdio.Reader
+		stdio.Writer
+	}{os.Stdin, os.Stdout}
 
-		cmd = strings.TrimSpace(cmd)
+	t := term.NewTerminal(screen, fmt.Sprintf("%v$ ", host))
+	for {
+		cmd, err := readNonEmptyLine(t)
+		io.FatalIfError(err)
+		if cmd == "" {
+			return
+		}
 		parts := strings.Split(cmd, " ")
 		if len(parts) > 0 {
 			exe := getExe(parts[0], commands)
@@ -63,4 +73,26 @@ func getExe(cmd string, commands [][]string) string {
 		}
 	}
 	return ""
+}
+
+func readNonEmptyLine(t *term.Terminal) (cmd string, err error) {
+	oldState, err := term.MakeRaw(0)
+
+	if err != nil {
+		return "", err
+	}
+	defer func() {
+		err = term.Restore(0, oldState)
+	}()
+
+	for {
+		cmd, err := t.ReadLine()
+		if err != nil {
+			return "", err
+		}
+		cmd = strings.TrimSpace(cmd)
+		if cmd != "" {
+			return cmd, nil
+		}
+	}
 }
