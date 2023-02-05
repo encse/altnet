@@ -21,7 +21,17 @@ func main() {
 
 	fi, err := altnet.GetFileInfo(ctx, name)
 	io.FatalIfError(err)
-	fmt.Print(io.ClearScreen + io.Home)
+
+	fmt.Print("\033[s")    // save cursor pos
+	fmt.Print("\033[?47h") // alternate screen buffer on
+	fmt.Print("\033]1337;SetColumns=80\007")
+	fmt.Print(io.ClearScreen)
+	fmt.Print(io.Home)
+	defer func() {
+		fmt.Print("\033[?47l") // alternate screen buffer off
+		fmt.Print("\033]1337;SetColumns=0\007")
+		fmt.Print("\033[u") // reset cursor pos
+	}()
 
 	in, err := os.Open(fi.RealPath())
 	io.FatalIfError(err)

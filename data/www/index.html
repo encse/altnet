@@ -64,13 +64,22 @@
                         },
                     });
                     this.term.open(element);
+
                     const fitAddon = new FitAddon.FitAddon();
                     this.term.loadAddon(fitAddon);
                     this.term.loadAddon(new WebLinksAddon.WebLinksAddon());
                     fitAddon.fit();
-                    let dims = fitAddon.proposeDimensions()
-                    this.term.resize(80, dims.rows);
-
+                    this.term.parser.registerOscHandler(1337, (data) => {
+                        const parts = data.split("=");
+                        if (parts[0] == "SetColumns") {
+                            if (parts[1] == 0) {
+                                fitAddon.fit();
+                            } else {
+                                const dim = fitAddon.proposeDimensions();
+                                this.term.resize(parseInt(parts[1], 10), dim.rows);
+                            }
+                        }
+                    })
                 }
 
                 write(msg) {
