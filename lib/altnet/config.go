@@ -12,6 +12,7 @@ type key string
 const hostKey key = "ALTNET_HOST"
 const userKey key = "ALTNET_USER"
 const exeKey key = "ALTNET_EXE"
+const sessionKey key = "ALTNET_SESSION"
 
 type Host string
 type User string
