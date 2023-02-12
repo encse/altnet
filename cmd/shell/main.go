@@ -29,7 +29,9 @@ var commands = [][]string{
 }
 
 func main() {
+
 	ctx := altnet.ContextFromEnv(context.Background())
+
 	host, err := altnet.GetHost(ctx)
 	io.FatalIfError(err)
 
@@ -42,9 +44,7 @@ func main() {
 	for {
 		cmd, err := readNonEmptyLine(t)
 		io.FatalIfError(err)
-		if cmd == "" {
-			return
-		}
+
 		parts := strings.Split(cmd, " ")
 		if len(parts) > 0 {
 			exe := getExe(parts[0], commands)
@@ -75,19 +75,22 @@ func getExe(cmd string, commands [][]string) string {
 	return ""
 }
 
-func readNonEmptyLine(t *term.Terminal) (cmd string, err error) {
+func readNonEmptyLine(t *term.Terminal) (string, error) {
 	oldState, err := term.MakeRaw(0)
 
 	if err != nil {
 		return "", err
 	}
+
 	defer func() {
-		err = term.Restore(0, oldState)
+		err := term.Restore(0, oldState)
+		io.FatalIfError(err)
 	}()
 
 	for {
 		cmd, err := t.ReadLine()
 		if err != nil {
+			// note: ctrl+D and ctrl+C are reported as errors here
 			return "", err
 		}
 		cmd = strings.TrimSpace(cmd)
