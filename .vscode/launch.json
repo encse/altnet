@@ -11,6 +11,7 @@
             "mode": "auto",
             "cwd": "${workspaceFolder}",
             "program": "${fileDirname}",
+            "debugAdapter": "dlv-dap",
             "env": {
                 "ALTNET_HOST": "csokavar",
                 "ALTNET_USER": "guest"
