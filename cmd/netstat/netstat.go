@@ -36,8 +36,8 @@ func main() {
 		host := uumap[key]
 		rows = append(rows, []string{
 			string(host.HostName),
-			io.Substring(string(host.Organization), 36),
-			io.Substring(string(host.Location), 18),
+			io.Substring(string(host.Organization), 32),
+			io.Substring(string(host.Location), 32),
 		})
 	}
 
