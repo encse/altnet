@@ -24,7 +24,7 @@ type ProcInfo struct {
 }
 
 func KillSession(sessionId SessionId, signal process.Signal) error {
-	log.Info("Killing session %v", sessionId)
+	log.Info("Killing session", sessionId)
 
 	any := true
 	for any {
@@ -48,7 +48,6 @@ func KillSession(sessionId SessionId, signal process.Signal) error {
 					if parts[0] == string(sessionKey) {
 						if parts[1] == strconv.Itoa(int(sessionId)) {
 
-							log.Info("lofasz", sessionId, process.Pid)
 							any = true
 							err := syscall.Kill(int(process.Pid), signal)
 							if err != nil {
