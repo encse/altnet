@@ -7,6 +7,7 @@ import (
 
 	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/encse/altnet/lib/altnet"
+	"github.com/nyaruka/phonenumbers"
 )
 
 type Uunode = struct {
@@ -47,6 +48,28 @@ func GetUumap() (Uumap, error) {
 		},
 	}
 	return uumap, err
+}
+
+type PhoneNumber string
+type Phonebook = map[PhoneNumber]altnet.Host
+
+func ParsePhoneNumber(st string) (PhoneNumber, error) {
+	parsed, err := phonenumbers.Parse(st, "US")
+	if err != nil {
+		return "", err
+	}
+	return PhoneNumber(phonenumbers.Format(parsed, phonenumbers.INTERNATIONAL)), nil
+}
+
+func GetPhonebook() (Phonebook, error) {
+	phonebookBytes, err := ioutil.ReadFile("data/phonebook.json")
+	if err != nil {
+		return Phonebook{}, err
+	}
+
+	var phonebook Phonebook
+	err = json.Unmarshal(phonebookBytes, &phonebook)
+	return phonebook, err
 }
 
 func FindPaths(network Uumap, sourceHost string, targetHost string, maxCount int) [][]string {

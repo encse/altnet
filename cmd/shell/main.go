@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/encse/altnet/lib/altnet"
-	"github.com/encse/altnet/lib/csokavar"
 	"github.com/encse/altnet/lib/io"
 	"golang.org/x/term"
 )
@@ -16,6 +15,7 @@ import (
 var commands = [][]string{
 	{"ansi <file>", "ansi file (*.ans) viewer"},
 	{"cat <file>", "print file contents"},
+	{"dial <phone number>", "connect to a host via modem"},
 	{"hosts", "show a list of hosts on the network"},
 	{"ls <glob>", "list files"},
 	{"netstat", "show connected hosts"},
@@ -49,7 +49,7 @@ func main() {
 		if len(parts) > 0 {
 			exe := getExe(parts[0], commands)
 			if exe != "" {
-				csokavar.RunCommand(ctx, exe, parts[1:]...)
+				altnet.RunCommand(ctx, exe, parts[1:]...)
 			} else if parts[0] == "?" {
 				fmt.Println(io.Table(commands...))
 			} else if parts[0] == "help" {

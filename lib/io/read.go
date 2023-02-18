@@ -8,6 +8,7 @@ import (
 	"os"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/encse/altnet/lib/log"
 	"github.com/encse/altnet/lib/slices"
@@ -137,6 +138,15 @@ func ReadOption(prompt, options string) (string, error) {
 		}
 		if len(key) == 1 && strings.Contains(strings.ToLower(options), strings.ToLower(key)) {
 			return strings.ToLower(key), nil
+		}
+	}
+}
+
+func SlowPrint(args ...any) {
+	for _, arg := range args {
+		for _, ch := range fmt.Sprint(arg) {
+			fmt.Printf("%c", ch)
+			<-time.After(100 * time.Millisecond)
 		}
 	}
 }

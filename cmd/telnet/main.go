@@ -7,9 +7,7 @@ import (
 	"strings"
 
 	"github.com/encse/altnet/lib/altnet"
-	"github.com/encse/altnet/lib/csokavar"
 	"github.com/encse/altnet/lib/io"
-	"github.com/encse/altnet/lib/log"
 	"github.com/encse/altnet/lib/slices"
 	"github.com/encse/altnet/lib/uumap"
 )
@@ -43,26 +41,7 @@ func main() {
 		return
 	}
 
-	fmt.Println(fmt.Sprintf("Connected to %s", strings.ToUpper(targetHost)))
-	fmt.Println()
-	fmt.Println("Enter your username or GUEST")
+	altnet.Login(ctx, altnet.Host(targetHost))
 
-	username, err := io.ReadNotEmpty("Login: ")
-	io.FatalIfError(err)
-
-	username = strings.ToLower(username)
-	if username != "guest" {
-		for i := 0; i < 3; i++ {
-			_, err = io.ReadPassword("Password: ")
-			io.FatalIfError(err)
-		}
-	} else {
-		ctx = altnet.SetHost(ctx, altnet.Host(targetHost))
-		ctx = altnet.SetUser(ctx, altnet.User(username))
-
-		log.Infof("Connected as %s", username)
-		fmt.Println("Welcome", username)
-		csokavar.RunHiddenCommand(ctx, "./shell")
-	}
 	fmt.Println("Connection closed")
 }

@@ -69,9 +69,9 @@ loop:
 
 		switch strings.ToLower(option) {
 		case "t":
-			csokavar.RunCommand(ctx, "./twitter", "encse")
+			altnet.RunCommand(ctx, "./twitter", "encse")
 		case "g":
-			csokavar.RunCommand(ctx, "./skyline", "encse")
+			altnet.RunCommand(ctx, "./skyline", "encse")
 		case "c":
 			gpgKey, err := csokavar.GpgKey(screenWidth)
 			if err != nil {
@@ -80,9 +80,9 @@ loop:
 			}
 			fmt.Println(gpgKey)
 		case "i":
-			csokavar.RunCommand(ctx, "./zrun", "idoregesz")
+			altnet.RunCommand(ctx, "./zrun", "idoregesz")
 		case "s":
-			csokavar.RunHiddenCommand(ctx, "./shell")
+			altnet.RunHiddenCommand(ctx, "./shell")
 		case "x":
 			break loop
 		}

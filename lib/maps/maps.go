@@ -15,3 +15,8 @@ func Keys[M ~map[K]V, K comparable, V any](m M) []K {
 func Values[M ~map[K]V, K comparable, V any](m M) []V {
 	return xmaps.Values(m)
 }
+
+func Contains[M ~map[K]V, K comparable, V any](m M, k K) bool {
+	_, ok := m[k]
+	return ok
+}

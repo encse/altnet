@@ -11,7 +11,6 @@ import (
 
 	"github.com/encse/altnet/lib/altnet"
 	"github.com/encse/altnet/lib/config"
-	"github.com/encse/altnet/lib/csokavar"
 	"github.com/encse/altnet/lib/io"
 	"github.com/encse/altnet/lib/log"
 	"golang.org/x/exp/maps"
@@ -46,5 +45,5 @@ func main() {
 
 	name, err := io.ReadArgFromList("game", os.Args, 1, maps.Keys(games))
 	io.FatalIfError(err)
-	csokavar.RunHiddenCommand(ctx, conf.Dfrotz.Location, "-q", "-R", "/tmp", games[name])
+	altnet.RunHiddenCommand(ctx, conf.Dfrotz.Location, "-q", "-R", "/tmp", games[name])
 }
