@@ -7,4 +7,4 @@ and BBS hosts browsable in a telnet like environment.
 
 It's in active development as of the beginning of
 2023. I keep adding features whenever I have 
-time to do that.
+time to do so.
