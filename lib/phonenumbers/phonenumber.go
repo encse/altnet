@@ -8,6 +8,32 @@ import (
 
 type PhoneNumber string
 
+func (pn PhoneNumber) Prev() (PhoneNumber, bool) {
+	repr, err := lib.Parse(string(pn), "US")
+	if err != nil {
+		return pn, false
+	}
+	if repr.NationalNumber == nil {
+		return pn, false
+	}
+	*repr.NationalNumber -= 1
+
+	return PhoneNumber(lib.Format(repr, lib.INTERNATIONAL)), true
+}
+
+func (pn PhoneNumber) Next() (PhoneNumber, bool) {
+	repr, err := lib.Parse(string(pn), "US")
+	if err != nil {
+		return pn, false
+	}
+	if repr.NationalNumber == nil {
+		return pn, false
+	}
+	*repr.NationalNumber += 1
+
+	return PhoneNumber(lib.Format(repr, lib.INTERNATIONAL)), true
+}
+
 func (pn PhoneNumber) ToAtdtString() (string, error) {
 	repr, err := lib.Parse(string(pn), "US")
 	if err != nil {
@@ -33,6 +59,7 @@ func ParsePhoneNumber(st string) (PhoneNumber, error) {
 }
 
 func ParsePhoneNumberSkipExtension(st string) (PhoneNumber, error) {
+
 	repr, err := lib.Parse(st, "US")
 	if err != nil {
 		return PhoneNumber(""), err

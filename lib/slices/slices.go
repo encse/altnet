@@ -1,19 +1,22 @@
 package slices
 
 import (
+	"errors"
+	"math/rand"
+
 	"golang.org/x/exp/constraints"
-	xslices "golang.org/x/exp/slices"
+	lib "golang.org/x/exp/slices"
 )
 
 // Contains reports whether v is present in s.
 func Contains[E comparable](s []E, v E) bool {
-	return xslices.Contains(s, v)
+	return lib.Contains(s, v)
 }
 
 // Clone returns a copy of the slice.
 // The elements are copied using assignment, so this is a shallow clone.
 func Clone[S ~[]E, E any](s S) S {
-	return xslices.Clone(s)
+	return lib.Clone(s)
 }
 
 // Sort sorts a slice of any ordered type in ascending order.
@@ -22,7 +25,7 @@ func Clone[S ~[]E, E any](s S) S {
 // Use slices.SortFunc(x, func(a, b float64) bool {return a < b || (math.IsNaN(a) && !math.IsNaN(b))})
 // instead if the input may contain NaNs.
 func Sort[E constraints.Ordered](x []E) {
-	xslices.Sort(x)
+	lib.Sort(x)
 }
 
 // SortFunc sorts the slice x in ascending order as determined by the less function.
@@ -31,7 +34,7 @@ func Sort[E constraints.Ordered](x []E) {
 // SortFunc requires that less is a strict weak ordering.
 // See https://en.wikipedia.org/wiki/Weak_ordering#Strict_weak_orderings.
 func SortFunc[E any](x []E, less func(a, b E) bool) {
-	xslices.SortFunc(x, less)
+	lib.SortFunc(x, less)
 }
 
 func Take[E comparable](s []E, n int) []E {
@@ -61,4 +64,25 @@ func Map[A any, B any](items []A, f func(a A) B) []B {
 		res = append(res, f(a))
 	}
 	return res
+}
+
+func Filter[A any](items []A, f func(a A) bool) []A {
+	res := make([]A, 0, len(items))
+	for _, a := range items {
+		if f(a) {
+			res = append(res, a)
+		}
+	}
+	return res
+}
+
+// Choose returns one item from the slice choosen at random, an error is
+// returned if the slice is empty
+func Choose[A any](items []A) (A, error) {
+	if len(items) > 0 {
+		return items[rand.Intn(len(items))], nil
+	}
+
+	var zero A
+	return zero, errors.New("slice is empty")
 }

@@ -17,10 +17,10 @@ func main() {
 	host, err := altnet.GetHost(ctx)
 	io.FatalIfError(err)
 
-	uumap, err := uumap.GetUumap()
+	entries, err := uumap.GetUumap()
 	io.FatalIfError(err)
 
-	entry, ok := uumap[string(host)]
+	entry, ok := entries[string(host)]
 	if !ok {
 		fmt.Println("host not found")
 		return
@@ -41,7 +41,7 @@ func main() {
 		return
 	}
 
-	altnet.Login(ctx, altnet.Host(targetHost))
+	altnet.Login(ctx, uumap.Host(targetHost))
 
 	fmt.Println("Connection closed")
 }

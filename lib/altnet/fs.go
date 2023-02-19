@@ -14,6 +14,7 @@ import (
 
 	"github.com/encse/altnet/lib/io"
 	"github.com/encse/altnet/lib/log"
+	"github.com/encse/altnet/lib/uumap"
 )
 
 const altnetRoot = "data/altnet"
@@ -96,17 +97,17 @@ func Open(ctx context.Context, name string) (*os.File, error) {
 	return os.Open(fi.RealPath())
 }
 
-func getAltnetUserDir(host Host, user User) string {
+func getAltnetUserDir(host uumap.Host, user User) string {
 	return path.Join(altnetRoot, string(host), "usr", string(user))
 }
-func getAltnetSeedDir(host Host) string {
+func getAltnetSeedDir(host uumap.Host) string {
 	return path.Join(altnetRoot, string(host), "seed")
 }
-func getAltnetSystemDir(host Host) string {
+func getAltnetSystemDir(host uumap.Host) string {
 	return path.Join(altnetRoot, string(host), "sys")
 }
 
-func seedHost(host Host) error {
+func seedHost(host uumap.Host) error {
 	targetDir := getAltnetSeedDir(host)
 
 	targetDir, err := filepath.Abs(targetDir)

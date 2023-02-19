@@ -4,12 +4,15 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/encse/altnet/lib/io"
 	"github.com/encse/altnet/lib/log"
+	"github.com/encse/altnet/lib/phonenumbers"
+	"github.com/encse/altnet/lib/uumap"
 )
 
-func Login(ctx context.Context, host Host) {
+func Login(ctx context.Context, host uumap.Host) {
 	fmt.Println(fmt.Sprintf("Connected to %s", strings.ToUpper(string(host))))
 	fmt.Println()
 	fmt.Println("Enter your username or GUEST")
@@ -30,5 +33,40 @@ func Login(ctx context.Context, host Host) {
 		log.Infof("Connected as %s", username)
 		fmt.Println("Welcome", username)
 		RunHiddenCommand(ctx, "./shell")
+	}
+}
+
+// Dial calls the given phone number in the phone book. If there is a host
+// registered to that number, it tries to establish a connection with the host
+// and starts a login session. The result is true. If there is host listening
+// or the line is busy, dial returns false.
+func Dial(
+	ctx context.Context,
+	phonenumber phonenumbers.PhoneNumber,
+	phonebook uumap.Phonebook,
+) (bool, error) {
+	atdt, err := phonenumber.ToAtdtString()
+	if err != nil {
+		return false, err
+	}
+
+	fmt.Print("  dialing ")
+	io.SlowPrint(atdt)
+	fmt.Print("    ")
+	time.Sleep(2 * time.Second)
+
+	if host, ok := phonebook.Lookup(phonenumber); ok {
+		fmt.Println("CONNECT")
+		fmt.Println("")
+		fmt.Println("")
+		fmt.Println("")
+		Login(ctx, host)
+		io.SlowPrint("?=\"[<}|}&'|!?+++ATH0\n")
+		fmt.Println("NO CARRIER")
+		fmt.Printf("%%disconnected\n")
+		return true, nil
+	} else {
+		fmt.Println("NO CARRIER")
+		return false, nil
 	}
 }

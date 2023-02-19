@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/encse/altnet/lib/altnet"
 	"github.com/encse/altnet/lib/io"
@@ -35,26 +34,6 @@ func main() {
 		return
 	}
 
-	atdt, err := phoneNumber.ToAtdtString()
-	if err != nil {
-		fmt.Println("Invalid phone number.")
-		return
-	}
-	fmt.Print("  dialing ")
-	io.SlowPrint(atdt)
-	fmt.Print("     ")
-	<-time.After(2 * time.Second)
-
-	if host, ok := phonebook.Lookup(phoneNumber); ok {
-		fmt.Println("CONNECT")
-		fmt.Println("")
-		fmt.Println("")
-		fmt.Println("")
-		altnet.Login(ctx, host)
-		io.SlowPrint("?=\"[<}|}&'|!?+++ATH0\n")
-		fmt.Println("NO CARRIER")
-		fmt.Printf("%%disconnected\n")
-	} else {
-		fmt.Println("NO CARRIER")
-	}
+	_, err = altnet.Dial(ctx, phoneNumber, phonebook)
+	io.FatalIfError(err)
 }
