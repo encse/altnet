@@ -7,7 +7,7 @@ import (
 
 	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/encse/altnet/lib/altnet"
-	"github.com/nyaruka/phonenumbers"
+	"github.com/encse/altnet/lib/phonenumbers"
 )
 
 type Uunode = struct {
@@ -50,15 +50,27 @@ func GetUumap() (Uumap, error) {
 	return uumap, err
 }
 
-type PhoneNumber string
-type Phonebook = map[PhoneNumber]altnet.Host
+type Phonebook struct {
+	items map[phonenumbers.PhoneNumber]altnet.Host
+}
 
-func ParsePhoneNumber(st string) (PhoneNumber, error) {
-	parsed, err := phonenumbers.Parse(st, "US")
-	if err != nil {
-		return "", err
+// Lookup checks the number in the phonebook and returns with a hostname if found.
+// If the host doesn't need an extension but an extension is provided in the phone number
+// we return with the host regardless. However if the host requires an extension and no
+// extension is provided in the phone number we return with failure.
+// This is analogous to dialing a number: if the extension is not needed, it is simply
+// ignored.
+func (phonebook Phonebook) Lookup(phoneNumber phonenumbers.PhoneNumber) (altnet.Host, bool) {
+	if host, ok := phonebook.items[phoneNumber]; ok {
+		return host, true
 	}
-	return PhoneNumber(phonenumbers.Format(parsed, phonenumbers.INTERNATIONAL)), nil
+
+	withoutExt, err := phonenumbers.ParsePhoneNumberSkipExtension(string(phoneNumber))
+	if err != nil {
+		return altnet.Host(""), false
+	}
+	host, ok := phonebook.items[withoutExt]
+	return host, ok
 }
 
 func GetPhonebook() (Phonebook, error) {
@@ -68,7 +80,7 @@ func GetPhonebook() (Phonebook, error) {
 	}
 
 	var phonebook Phonebook
-	err = json.Unmarshal(phonebookBytes, &phonebook)
+	err = json.Unmarshal(phonebookBytes, &phonebook.items)
 	return phonebook, err
 }
 

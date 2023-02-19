@@ -9,6 +9,7 @@ import (
 
 	"github.com/encse/altnet/lib/altnet"
 	"github.com/encse/altnet/lib/io"
+	"github.com/encse/altnet/lib/phonenumbers"
 	"github.com/encse/altnet/lib/uumap"
 )
 
@@ -28,15 +29,23 @@ func main() {
 		io.FatalIfError(err)
 	}
 
-	phoneNumber, err := uumap.ParsePhoneNumber(tel)
+	phoneNumber, err := phonenumbers.ParsePhoneNumber(tel)
 	if err != nil {
 		fmt.Println("Invalid phone number.")
+		return
 	}
-	fmt.Print("  dialing ATDT ")
-	io.SlowPrint(phoneNumber)
+
+	atdt, err := phoneNumber.ToAtdtString()
+	if err != nil {
+		fmt.Println("Invalid phone number.")
+		return
+	}
+	fmt.Print("  dialing ")
+	io.SlowPrint(atdt)
 	fmt.Print("     ")
 	<-time.After(2 * time.Second)
-	if host, ok := phonebook[phoneNumber]; ok {
+
+	if host, ok := phonebook.Lookup(phoneNumber); ok {
 		fmt.Println("CONNECT")
 		fmt.Println("")
 		fmt.Println("")
