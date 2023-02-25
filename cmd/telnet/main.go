@@ -17,10 +17,10 @@ func main() {
 	host, err := altnet.GetHost(ctx)
 	io.FatalIfError(err)
 
-	entries, err := uumap.GetUumap()
+	network, err := uumap.GetUumap()
 	io.FatalIfError(err)
 
-	entry, ok := entries[string(host)]
+	entry, ok := network.Lookup(host)
 	if !ok {
 		fmt.Println("host not found")
 		return

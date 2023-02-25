@@ -28,7 +28,7 @@ func main() {
 	network, err := uumap.GetUumap()
 	io.FatalIfError(err)
 
-	if _, ok := network[targetHost]; !ok {
+	if _, ok := network.Lookup(uumap.Host(targetHost)); !ok {
 		fmt.Println("unknown host", targetHost)
 		return
 	}

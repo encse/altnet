@@ -5,22 +5,21 @@ import (
 	"sort"
 
 	"github.com/encse/altnet/lib/io"
-	"github.com/encse/altnet/lib/maps"
 	"github.com/encse/altnet/lib/uumap"
 )
 
 func main() {
-	uumap, err := uumap.GetUumap()
+	network, err := uumap.GetUumap()
 	io.FatalIfError(err)
-	keys := maps.Keys(uumap)
+	keys := network.Hosts()
 	sort.Strings(keys)
 
-	rows := make([][]string, 0, len(uumap)+2)
+	rows := make([][]string, 0, network.Size()+2)
 	rows = append(rows, []string{"host", "organization", "location"})
 	rows = append(rows, []string{"----", "------------", "--------"})
 
 	for _, key := range keys {
-		host := uumap[key]
+		host, _ := network.Lookup(uumap.Host(key))
 		rows = append(rows, []string{
 			string(host.HostName),
 			io.Substring(string(host.Organization), 32),

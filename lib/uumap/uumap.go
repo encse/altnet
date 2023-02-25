@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 
 	mapset "github.com/deckarep/golang-set/v2"
+	"github.com/encse/altnet/lib/maps"
 )
 
 type Uunode = struct {
@@ -23,7 +24,23 @@ type Uunode = struct {
 }
 
 type Host string
-type Uumap = map[string]Uunode
+
+type Uumap struct {
+	repr map[string]Uunode
+}
+
+func (u Uumap) Hosts() []string {
+	return maps.Keys(u.repr)
+}
+
+func (u Uumap) Size() int {
+	return len(u.repr)
+}
+
+func (u Uumap) Lookup(host Host) (Uunode, bool) {
+	res, ok := u.repr[string(host)]
+	return res, ok
+}
 
 func GetUumap() (Uumap, error) {
 	uumapBytes, err := ioutil.ReadFile("data/uumap.json")
@@ -31,10 +48,10 @@ func GetUumap() (Uumap, error) {
 		return Uumap{}, err
 	}
 
-	var uumap Uumap
-	err = json.Unmarshal(uumapBytes, &uumap)
+	var repr map[string]Uunode
+	err = json.Unmarshal(uumapBytes, &repr)
 
-	uumap["csokavar"] = Uunode{
+	repr["csokavar"] = Uunode{
 		Hosts: []string{
 			"oddjob",
 			"adaptex",
@@ -46,7 +63,8 @@ func GetUumap() (Uumap, error) {
 			"mimsy",
 		},
 	}
-	return uumap, err
+
+	return Uumap{repr: repr}, err
 }
 
 func FindPaths(network Uumap, sourceHost string, targetHost string, maxCount int) [][]string {
@@ -64,7 +82,7 @@ func FindPaths(network Uumap, sourceHost string, targetHost string, maxCount int
 
 		if host == targetHost {
 			res = append(res, path)
-		} else if entry, ok := network[host]; ok {
+		} else if entry, ok := network.repr[host]; ok {
 			for _, hostNext := range entry.Hosts {
 				if !seen.Contains(hostNext) {
 					res := make([]string, len(path), len(path)+1)

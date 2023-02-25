@@ -10,15 +10,15 @@ import (
 )
 
 func main() {
-	host, err := io.ReadArg("host", os.Args, 1)
+	hostname, err := io.ReadArg("host", os.Args, 1)
 	io.FatalIfError(err)
 
-	host = strings.ToLower(host)
+	host := uumap.Host(strings.ToLower(hostname))
 
-	uumap, err := uumap.GetUumap()
+	network, err := uumap.GetUumap()
 	io.FatalIfError(err)
 
-	if entry, ok := uumap[host]; ok {
+	if entry, ok := network.Lookup(host); ok {
 		fmt.Println(entry.Entry)
 	} else {
 		fmt.Println("host not found")

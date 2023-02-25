@@ -16,10 +16,10 @@ func main() {
 	host, err := altnet.GetHost(ctx)
 	io.FatalIfError(err)
 
-	uumap, err := uumap.GetUumap()
+	network, err := uumap.GetUumap()
 	io.FatalIfError(err)
 
-	uuentry, ok := uumap[string(host)]
+	uuentry, ok := network.Lookup(host)
 	if !ok {
 		fmt.Println("host not found")
 		return
@@ -33,7 +33,7 @@ func main() {
 	rows = append(rows, []string{"----", "------------", "--------"})
 
 	for _, key := range keys {
-		host := uumap[key]
+		host, _ := network.Lookup(uumap.Host(key))
 		rows = append(rows, []string{
 			string(host.HostName),
 			io.Substring(string(host.Organization), 32),
