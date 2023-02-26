@@ -17,6 +17,7 @@ COPY go.sum .
 RUN go mod download
 COPY cmd ./cmd
 COPY lib ./lib
+COPY ent ./ent
 RUN go install ./cmd/...
 
 FROM golang:latest AS base
