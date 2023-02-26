@@ -29,12 +29,6 @@ func (hu *HostUpdate) Where(ps ...predicate.Host) *HostUpdate {
 	return hu
 }
 
-// SetName sets the "name" field.
-func (hu *HostUpdate) SetName(sn schema.HostName) *HostUpdate {
-	hu.mutation.SetName(sn)
-	return hu
-}
-
 // SetEntry sets the "entry" field.
 func (hu *HostUpdate) SetEntry(s string) *HostUpdate {
 	hu.mutation.SetEntry(s)
@@ -224,9 +218,6 @@ func (hu *HostUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			}
 		}
 	}
-	if value, ok := hu.mutation.Name(); ok {
-		_spec.SetField(host.FieldName, field.TypeString, value)
-	}
 	if value, ok := hu.mutation.Entry(); ok {
 		_spec.SetField(host.FieldEntry, field.TypeString, value)
 	}
@@ -291,12 +282,6 @@ type HostUpdateOne struct {
 	fields   []string
 	hooks    []Hook
 	mutation *HostMutation
-}
-
-// SetName sets the "name" field.
-func (huo *HostUpdateOne) SetName(sn schema.HostName) *HostUpdateOne {
-	huo.mutation.SetName(sn)
-	return huo
 }
 
 // SetEntry sets the "entry" field.
@@ -517,9 +502,6 @@ func (huo *HostUpdateOne) sqlSave(ctx context.Context) (_node *Host, err error) 
 				ps[i](selector)
 			}
 		}
-	}
-	if value, ok := huo.mutation.Name(); ok {
-		_spec.SetField(host.FieldName, field.TypeString, value)
 	}
 	if value, ok := huo.mutation.Entry(); ok {
 		_spec.SetField(host.FieldEntry, field.TypeString, value)

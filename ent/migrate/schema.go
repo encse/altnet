@@ -11,7 +11,7 @@ var (
 	// HostsColumns holds the columns for the "hosts" table.
 	HostsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "name", Type: field.TypeString},
+		{Name: "name", Type: field.TypeString, Unique: true},
 		{Name: "entry", Type: field.TypeString, Default: ""},
 		{Name: "machine_type", Type: field.TypeString, Default: ""},
 		{Name: "organization", Type: field.TypeString, Default: ""},

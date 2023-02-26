@@ -14,7 +14,7 @@ type Host struct {
 func (Host) Fields() []ent.Field {
 
 	return []ent.Field{
-		field.String("name").GoType(HostName("")),
+		field.String("name").GoType(HostName("")).Unique().Immutable(),
 		field.String("entry").Default(""),
 		field.String("machine_type").Default(""),
 		field.String("organization").Default(""),
