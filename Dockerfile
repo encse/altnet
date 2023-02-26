@@ -18,7 +18,7 @@ RUN go mod download
 COPY cmd ./cmd
 COPY lib ./lib
 COPY ent ./ent
-RUN go install ./cmd/...
+RUN go install -ldflags="-s -w" ./cmd/...
 
 FROM golang:latest AS base
 RUN apt update
