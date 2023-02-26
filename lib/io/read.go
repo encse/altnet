@@ -57,10 +57,10 @@ func ReadArg(prompt string, args []string, iarg int) (string, error) {
 	return arg, nil
 }
 
-func ReadArgFromList(prompt string, args []string, iarg int, options []string) (string, error) {
-	arg := ""
+func ReadArgFromList[T ~string](prompt string, args []string, iarg int, options []T) (T, error) {
+	arg := T("")
 	if len(args) > iarg {
-		arg = args[iarg]
+		arg = T(args[iarg])
 	}
 
 	if slices.Contains(options, arg) {
@@ -69,11 +69,11 @@ func ReadArgFromList(prompt string, args []string, iarg int, options []string) (
 
 	for {
 		var err error
-		arg, err = ReadNotEmpty(prompt + " (? for list): ")
+		st, err := ReadNotEmpty(prompt + " (? for list): ")
 		if err != nil {
 			return "", err
 		}
-
+		arg = T(st)
 		if slices.Contains(options, arg) {
 			return arg, err
 		}

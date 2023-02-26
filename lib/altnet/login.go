@@ -6,14 +6,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/encse/altnet/ent/schema"
 	"github.com/encse/altnet/lib/io"
 	"github.com/encse/altnet/lib/log"
-	"github.com/encse/altnet/lib/phonenumbers"
 	"github.com/encse/altnet/lib/uumap"
 )
 
-func Login(ctx context.Context, host uumap.Host) {
-	fmt.Println(fmt.Sprintf("Connected to %s", strings.ToUpper(string(host))))
+func Login(ctx context.Context, host schema.HostName) {
+	fmt.Printf("Connected to %s\n", strings.ToUpper(string(host)))
 	fmt.Println()
 	fmt.Println("Enter your username or GUEST")
 
@@ -42,8 +42,8 @@ func Login(ctx context.Context, host uumap.Host) {
 // or the line is busy, dial returns false.
 func Dial(
 	ctx context.Context,
-	phonenumber phonenumbers.PhoneNumber,
-	phonebook uumap.Phonebook,
+	phonenumber schema.PhoneNumber,
+	network uumap.Network,
 ) (bool, error) {
 	atdt, err := phonenumber.ToAtdtString()
 	if err != nil {
@@ -55,7 +55,12 @@ func Dial(
 	fmt.Print("    ")
 	time.Sleep(2 * time.Second)
 
-	if host, ok := phonebook.Lookup(phonenumber); ok {
+	host, err := network.LookupHostByPhone(ctx, schema.PhoneNumber(phonenumber))
+	if err != nil {
+		return false, err
+	}
+
+	if host != "" {
 		fmt.Println("CONNECT")
 		fmt.Println("")
 		fmt.Println("")

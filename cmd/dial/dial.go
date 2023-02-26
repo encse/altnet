@@ -6,9 +6,9 @@ import (
 	"os"
 	"strings"
 
+	"github.com/encse/altnet/ent/schema"
 	"github.com/encse/altnet/lib/altnet"
 	"github.com/encse/altnet/lib/io"
-	"github.com/encse/altnet/lib/phonenumbers"
 	"github.com/encse/altnet/lib/uumap"
 )
 
@@ -17,8 +17,9 @@ func main() {
 	_, err := altnet.GetHost(ctx)
 	io.FatalIfError(err)
 
-	phonebook, err := uumap.GetPhonebook()
+	network, err := uumap.NetworkConn()
 	io.FatalIfError(err)
+	defer network.Close()
 
 	tel := ""
 	if len(os.Args) > 1 {
@@ -28,12 +29,12 @@ func main() {
 		io.FatalIfError(err)
 	}
 
-	phoneNumber, err := phonenumbers.ParsePhoneNumber(tel)
+	phoneNumber, err := schema.ParsePhoneNumber(tel)
 	if err != nil {
 		fmt.Println("Invalid phone number.")
 		return
 	}
 
-	_, err = altnet.Dial(ctx, phoneNumber, phonebook)
+	_, err = altnet.Dial(ctx, phoneNumber, network)
 	io.FatalIfError(err)
 }

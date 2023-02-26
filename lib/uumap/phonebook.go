@@ -1,28 +1,39 @@
 package uumap
 
 import (
-	"encoding/json"
-	"io/ioutil"
+	"context"
 	"strings"
 
-	"github.com/encse/altnet/lib/maps"
-	"github.com/encse/altnet/lib/phonenumbers"
-	"github.com/encse/altnet/lib/slices"
+	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqljson"
+	"github.com/encse/altnet/ent/host"
+	"github.com/encse/altnet/ent/schema"
 )
 
-type Phonebook struct {
-	items map[phonenumbers.PhoneNumber]Host
-}
+func (n Network) FindPhoneNumbersWithPrefix(ctx context.Context, prefix string) []schema.PhoneNumber {
 
-func GetPhonebook() (Phonebook, error) {
-	phonebookBytes, err := ioutil.ReadFile("data/phonebook.json")
-	if err != nil {
-		return Phonebook{}, err
+	var vs []struct {
+		Phone []schema.PhoneNumber
 	}
 
-	var phonebook Phonebook
-	err = json.Unmarshal(phonebookBytes, &phonebook.items)
-	return phonebook, err
+	err := n.client.Host.
+		Query().
+		Select(host.FieldPhone).
+		Scan(ctx, &vs)
+
+	if err != nil {
+		return nil
+	}
+
+	res := make([]schema.PhoneNumber, 0)
+	for _, v := range vs {
+		for _, phone := range v.Phone {
+			if strings.HasPrefix(string(phone), prefix) {
+				res = append(res, schema.PhoneNumber(phone))
+			}
+		}
+	}
+	return res
 }
 
 // Lookup checks the number in the phonebook and returns with a hostname if found.
@@ -31,22 +42,37 @@ func GetPhonebook() (Phonebook, error) {
 // extension is provided in the phone number we return with failure.
 // This is analogous to dialing a number: if the extension is not needed, it is simply
 // ignored.
-func (phonebook Phonebook) Lookup(phoneNumber phonenumbers.PhoneNumber) (Host, bool) {
-	if host, ok := phonebook.items[phoneNumber]; ok {
-		return host, true
+func (n Network) LookupHostByPhone(ctx context.Context, phoneNumber schema.PhoneNumber) (schema.HostName, error) {
+	host, err := n.lookupHostByPhoneI(ctx, phoneNumber)
+	if err != nil {
+		return schema.HostName(""), err
+	}
+	if host != "" {
+		return host, nil
 	}
 
-	withoutExt, err := phonenumbers.ParsePhoneNumberSkipExtension(string(phoneNumber))
+	withoutExt, err := schema.ParsePhoneNumberSkipExtension(string(phoneNumber))
 	if err != nil {
-		return Host(""), false
+		return schema.HostName(""), nil
 	}
-	host, ok := phonebook.items[withoutExt]
-	return host, ok
+
+	return n.lookupHostByPhoneI(ctx, schema.PhoneNumber(withoutExt))
 }
 
-func (phonebook Phonebook) LookupByPrefix(prefix string) []phonenumbers.PhoneNumber {
-	return slices.Filter(maps.Keys(phonebook.items),
-		func(phoneNumber phonenumbers.PhoneNumber) bool {
-			return strings.HasPrefix(string(phoneNumber), prefix)
-		})
+func (n Network) lookupHostByPhoneI(ctx context.Context, phoneNumber schema.PhoneNumber) (schema.HostName, error) {
+	hosts, err := n.client.Host.
+		Query().
+		Where(func(s *sql.Selector) {
+			s.Where(sqljson.ValueContains(host.FieldPhone, phoneNumber))
+		}).All(ctx)
+
+	if err != nil {
+		return "", err
+	}
+
+	if len(hosts) == 0 {
+		return "", nil
+	}
+
+	return hosts[0].Name, nil
 }

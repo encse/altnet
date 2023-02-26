@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strings"
 
+	"github.com/encse/altnet/ent/schema"
 	"github.com/encse/altnet/lib/altnet"
 	"github.com/encse/altnet/lib/io"
 	"github.com/encse/altnet/lib/slices"
@@ -14,34 +14,34 @@ import (
 
 func main() {
 	ctx := altnet.ContextFromEnv(context.Background())
-	host, err := altnet.GetHost(ctx)
+	hostName, err := altnet.GetHost(ctx)
 	io.FatalIfError(err)
 
-	network, err := uumap.GetUumap()
+	network, err := uumap.NetworkConn()
 	io.FatalIfError(err)
+	defer network.Close()
 
-	entry, ok := network.Lookup(host)
-	if !ok {
+	host, err := network.Lookup(ctx, hostName)
+	io.FatalIfError(err)
+	if host == nil {
 		fmt.Println("host not found")
 		return
 	}
 
-	targetHost := ""
+	targetHost := schema.HostName("")
 	if len(os.Args) > 1 {
-		targetHost = os.Args[1]
+		targetHost = schema.HostName(os.Args[1])
 	} else {
-		targetHost, err = io.ReadArgFromList("host", os.Args, 1, entry.Hosts)
+		targetHost, err = io.ReadArgFromList("host", os.Args, 1, host.Neighbours)
 		io.FatalIfError(err)
 	}
 
-	targetHost = strings.ToLower(targetHost)
-
-	if !slices.Contains(entry.Hosts, targetHost) {
+	if !slices.Contains(host.Neighbours, targetHost) {
 		fmt.Println("host not in NETSTAT")
 		return
 	}
 
-	altnet.Login(ctx, uumap.Host(targetHost))
+	altnet.Login(ctx, schema.HostName(targetHost))
 
 	fmt.Println("Connection closed")
 }

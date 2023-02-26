@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/encse/altnet/lib/uumap"
+	"github.com/encse/altnet/ent/schema"
 )
 
 type key string
@@ -36,17 +36,17 @@ func ContextFromEnv(ctx context.Context) context.Context {
 		ctx = SetUser(ctx, User(user))
 	}
 	if host, ok := os.LookupEnv(string(hostKey)); ok {
-		ctx = SetHost(ctx, uumap.Host(host))
+		ctx = SetHost(ctx, schema.HostName(host))
 	}
 	return ctx
 }
 
-func GetHost(ctx context.Context) (uumap.Host, error) {
+func GetHost(ctx context.Context) (schema.HostName, error) {
 	res := ctx.Value(hostKey)
 	if res == nil {
-		return "", errors.New("Host cannot be found")
+		return "", errors.New("host cannot be found")
 	}
-	return res.(uumap.Host), nil
+	return res.(schema.HostName), nil
 }
 
 func GetUser(ctx context.Context) (User, error) {
@@ -61,6 +61,6 @@ func SetUser(ctx context.Context, user User) context.Context {
 	return context.WithValue(ctx, userKey, user)
 }
 
-func SetHost(ctx context.Context, host uumap.Host) context.Context {
+func SetHost(ctx context.Context, host schema.HostName) context.Context {
 	return context.WithValue(ctx, hostKey, host)
 }

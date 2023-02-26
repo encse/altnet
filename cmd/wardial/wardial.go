@@ -8,9 +8,9 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/encse/altnet/ent/schema"
 	"github.com/encse/altnet/lib/altnet"
 	"github.com/encse/altnet/lib/io"
-	"github.com/encse/altnet/lib/phonenumbers"
 	"github.com/encse/altnet/lib/slices"
 	"github.com/encse/altnet/lib/uumap"
 )
@@ -20,18 +20,19 @@ func main() {
 	_, err := altnet.GetHost(ctx)
 	io.FatalIfError(err)
 
-	phonebook, err := uumap.GetPhonebook()
+	network, err := uumap.NetworkConn()
 	io.FatalIfError(err)
+	defer network.Close()
 
 	areaCode, err := getAreaCode(os.Args)
 	io.FatalIfError(err)
-
+	fmt.Println(areaCode)
 	// find all numbers in given area:
-	phoneNumbers := phonebook.LookupByPrefix("+1 " + areaCode + "-")
+	phoneNumbers := network.FindPhoneNumbersWithPrefix(ctx, "+1 "+areaCode+"-")
 
 	// filter out numbers with extensions:
 	phoneNumbers = slices.Filter(phoneNumbers,
-		func(x phonenumbers.PhoneNumber) bool {
+		func(x schema.PhoneNumber) bool {
 			return !strings.Contains(string(x), "ext.")
 		})
 
@@ -45,7 +46,7 @@ func main() {
 			st += fmt.Sprintf("%d", rand.Intn(10))
 		}
 
-		targetNumber, err = phonenumbers.ParsePhoneNumber(st)
+		targetNumber, err = schema.ParsePhoneNumber(st)
 		io.FatalIfError(err)
 	}
 
@@ -57,7 +58,7 @@ func main() {
 	}
 
 	for i := 0; i < 10; i++ {
-		ok, err := altnet.Dial(ctx, targetNumber, phonebook)
+		ok, err := altnet.Dial(ctx, targetNumber, network)
 		io.FatalIfError(err)
 		if ok {
 			break

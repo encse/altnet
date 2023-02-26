@@ -7,8 +7,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/encse/altnet/ent/schema"
 	"github.com/encse/altnet/lib/log"
-	"github.com/encse/altnet/lib/uumap"
 	"github.com/shirou/gopsutil/v3/process"
 )
 
@@ -64,7 +64,7 @@ func KillSession(sessionId SessionId, signal process.Signal) error {
 	return nil
 }
 
-func GetProcesses(host uumap.Host) ([]ProcInfo, error) {
+func GetProcesses(host schema.HostName) ([]ProcInfo, error) {
 	processes, err := process.Processes()
 	if err != nil {
 		return nil, err
@@ -97,7 +97,7 @@ func GetProcesses(host uumap.Host) ([]ProcInfo, error) {
 		procUser := env[string(userKey)]
 		procExe := env[string(exeKey)]
 
-		if uumap.Host(procHost) == host && procUser != "" && procExe != "" {
+		if schema.HostName(procHost) == host && procUser != "" && procExe != "" {
 			res = append(res, ProcInfo{
 				User:    User(procUser),
 				Exe:     Exe(procExe),

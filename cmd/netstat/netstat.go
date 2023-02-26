@@ -3,8 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
-	"sort"
 
+	"github.com/encse/altnet/ent/schema"
 	"github.com/encse/altnet/lib/altnet"
 	"github.com/encse/altnet/lib/io"
 	"github.com/encse/altnet/lib/slices"
@@ -16,26 +16,29 @@ func main() {
 	host, err := altnet.GetHost(ctx)
 	io.FatalIfError(err)
 
-	network, err := uumap.GetUumap()
+	network, err := uumap.NetworkConn()
+	io.FatalIfError(err)
+	defer network.Close()
+
+	uuentry, err := network.Lookup(ctx, host)
 	io.FatalIfError(err)
 
-	uuentry, ok := network.Lookup(host)
-	if !ok {
+	if uuentry == nil {
 		fmt.Println("host not found")
 		return
 	}
 
-	keys := slices.Clone(uuentry.Hosts)
-	sort.Strings(keys)
+	neighbours := slices.Clone(uuentry.Neighbours)
+	slices.Sort(neighbours)
 
-	rows := make([][]string, 0, len(keys)+2)
+	rows := make([][]string, 0, len(neighbours)+2)
 	rows = append(rows, []string{"host", "organization", "location"})
 	rows = append(rows, []string{"----", "------------", "--------"})
 
-	for _, key := range keys {
-		host, _ := network.Lookup(uumap.Host(key))
+	for _, key := range neighbours {
+		host, _ := network.Lookup(ctx, schema.HostName(key))
 		rows = append(rows, []string{
-			string(host.HostName),
+			string(host.Name),
 			io.Substring(string(host.Organization), 32),
 			io.Substring(string(host.Location), 32),
 		})
