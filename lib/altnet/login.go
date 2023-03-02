@@ -6,33 +6,40 @@ import (
 	"strings"
 	"time"
 
+	"github.com/encse/altnet/ent"
+	"github.com/encse/altnet/ent/host"
 	"github.com/encse/altnet/ent/schema"
 	"github.com/encse/altnet/lib/io"
 	"github.com/encse/altnet/lib/log"
 	"github.com/encse/altnet/lib/uumap"
 )
 
-func Login(ctx context.Context, host schema.HostName) {
-	fmt.Printf("Connected to %s\n", strings.ToUpper(string(host)))
-	fmt.Println()
-	fmt.Println("Enter your username or GUEST")
+func Login(ctx context.Context, h *ent.Host) {
 
-	username, err := io.ReadNotEmpty("Login: ")
-	io.FatalIfError(err)
+	ctx = SetHost(ctx, h.Name)
 
-	username = strings.ToLower(username)
-	if username != "guest" {
-		for i := 0; i < 3; i++ {
-			_, err = io.ReadPassword("Password: ")
-			io.FatalIfError(err)
+	if h.Type == host.TypeUucp {
+		fmt.Printf("Connected to %s\n", strings.ToUpper(string(h.Name)))
+		fmt.Println()
+		fmt.Println("Enter your username or GUEST")
+
+		username, err := io.ReadNotEmpty("Login: ")
+		io.FatalIfError(err)
+
+		username = strings.ToLower(username)
+		if username != "guest" {
+			for i := 0; i < 3; i++ {
+				_, err = io.ReadPassword("Password: ")
+				io.FatalIfError(err)
+			}
+		} else {
+			ctx = SetUser(ctx, User(username))
+			log.Infof("Connected as %s", username)
+			fmt.Println("Welcome", username)
+			RunHiddenCommand(ctx, "./shell")
 		}
 	} else {
-		ctx = SetHost(ctx, host)
-		ctx = SetUser(ctx, User(username))
-
-		log.Infof("Connected as %s", username)
-		fmt.Println("Welcome", username)
-		RunHiddenCommand(ctx, "./shell")
+		RunHiddenCommand(ctx, "./datadrivebbs")
 	}
 }
 
@@ -60,7 +67,7 @@ func Dial(
 		return false, err
 	}
 
-	if host != "" {
+	if host != nil {
 		fmt.Println("CONNECT")
 		fmt.Println("")
 		fmt.Println("")

@@ -19,6 +19,8 @@ type Host struct {
 	ID int `json:"id,omitempty"`
 	// Name holds the value of the "name" field.
 	Name schema.HostName `json:"name,omitempty"`
+	// Type holds the value of the "type" field.
+	Type host.Type `json:"type,omitempty"`
 	// Entry holds the value of the "entry" field.
 	Entry string `json:"entry,omitempty"`
 	// MachineType holds the value of the "machine_type" field.
@@ -50,7 +52,7 @@ func (*Host) scanValues(columns []string) ([]any, error) {
 			values[i] = new([]byte)
 		case host.FieldID:
 			values[i] = new(sql.NullInt64)
-		case host.FieldName, host.FieldEntry, host.FieldMachineType, host.FieldOrganization, host.FieldContact, host.FieldContactAddress, host.FieldCountry, host.FieldLocation, host.FieldGeoLocation:
+		case host.FieldName, host.FieldType, host.FieldEntry, host.FieldMachineType, host.FieldOrganization, host.FieldContact, host.FieldContactAddress, host.FieldCountry, host.FieldLocation, host.FieldGeoLocation:
 			values[i] = new(sql.NullString)
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type Host", columns[i])
@@ -78,6 +80,12 @@ func (h *Host) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field name", values[i])
 			} else if value.Valid {
 				h.Name = schema.HostName(value.String)
+			}
+		case host.FieldType:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field type", values[i])
+			} else if value.Valid {
+				h.Type = host.Type(value.String)
 			}
 		case host.FieldEntry:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -173,6 +181,9 @@ func (h *Host) String() string {
 	builder.WriteString(fmt.Sprintf("id=%v, ", h.ID))
 	builder.WriteString("name=")
 	builder.WriteString(fmt.Sprintf("%v", h.Name))
+	builder.WriteString(", ")
+	builder.WriteString("type=")
+	builder.WriteString(fmt.Sprintf("%v", h.Type))
 	builder.WriteString(", ")
 	builder.WriteString("entry=")
 	builder.WriteString(h.Entry)

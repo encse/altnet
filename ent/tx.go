@@ -14,6 +14,8 @@ type Tx struct {
 	config
 	// Host is the client for interacting with the Host builders.
 	Host *HostClient
+	// Joke is the client for interacting with the Joke builders.
+	Joke *JokeClient
 
 	// lazily loaded.
 	client     *Client
@@ -146,6 +148,7 @@ func (tx *Tx) Client() *Client {
 
 func (tx *Tx) init() {
 	tx.Host = NewHostClient(tx.config)
+	tx.Joke = NewJokeClient(tx.config)
 }
 
 // txDriver wraps the given dialect.Tx with a nop dialect.Driver implementation.

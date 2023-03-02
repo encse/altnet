@@ -41,7 +41,7 @@ func main() {
 		return
 	}
 
-	altnet.Login(ctx, schema.HostName(targetHost))
+	altnet.Login(ctx, host)
 
 	fmt.Println("Connection closed")
 }

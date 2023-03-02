@@ -15,6 +15,7 @@ func (Host) Fields() []ent.Field {
 
 	return []ent.Field{
 		field.String("name").GoType(HostName("")).Unique().Immutable(),
+		field.Enum("type").Values("bbs", "uucp"),
 		field.String("entry").Default(""),
 		field.String("machine_type").Default(""),
 		field.String("organization").Default(""),

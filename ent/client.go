@@ -11,6 +11,7 @@ import (
 	"github.com/encse/altnet/ent/migrate"
 
 	"github.com/encse/altnet/ent/host"
+	"github.com/encse/altnet/ent/joke"
 
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
@@ -23,6 +24,8 @@ type Client struct {
 	Schema *migrate.Schema
 	// Host is the client for interacting with the Host builders.
 	Host *HostClient
+	// Joke is the client for interacting with the Joke builders.
+	Joke *JokeClient
 }
 
 // NewClient creates a new client configured with the given options.
@@ -37,6 +40,7 @@ func NewClient(opts ...Option) *Client {
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
 	c.Host = NewHostClient(c.config)
+	c.Joke = NewJokeClient(c.config)
 }
 
 // Open opens a database/sql.DB specified by the driver name and
@@ -71,6 +75,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		ctx:    ctx,
 		config: cfg,
 		Host:   NewHostClient(cfg),
+		Joke:   NewJokeClient(cfg),
 	}, nil
 }
 
@@ -91,6 +96,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		ctx:    ctx,
 		config: cfg,
 		Host:   NewHostClient(cfg),
+		Joke:   NewJokeClient(cfg),
 	}, nil
 }
 
@@ -120,12 +126,14 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	c.Host.Use(hooks...)
+	c.Joke.Use(hooks...)
 }
 
 // Intercept adds the query interceptors to all the entity clients.
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	c.Host.Intercept(interceptors...)
+	c.Joke.Intercept(interceptors...)
 }
 
 // Mutate implements the ent.Mutator interface.
@@ -133,6 +141,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	switch m := m.(type) {
 	case *HostMutation:
 		return c.Host.mutate(ctx, m)
+	case *JokeMutation:
+		return c.Joke.mutate(ctx, m)
 	default:
 		return nil, fmt.Errorf("ent: unknown mutation type %T", m)
 	}
@@ -253,5 +263,123 @@ func (c *HostClient) mutate(ctx context.Context, m *HostMutation) (Value, error)
 		return (&HostDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown Host mutation op: %q", m.Op())
+	}
+}
+
+// JokeClient is a client for the Joke schema.
+type JokeClient struct {
+	config
+}
+
+// NewJokeClient returns a client for the Joke from the given config.
+func NewJokeClient(c config) *JokeClient {
+	return &JokeClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `joke.Hooks(f(g(h())))`.
+func (c *JokeClient) Use(hooks ...Hook) {
+	c.hooks.Joke = append(c.hooks.Joke, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `joke.Intercept(f(g(h())))`.
+func (c *JokeClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Joke = append(c.inters.Joke, interceptors...)
+}
+
+// Create returns a builder for creating a Joke entity.
+func (c *JokeClient) Create() *JokeCreate {
+	mutation := newJokeMutation(c.config, OpCreate)
+	return &JokeCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Joke entities.
+func (c *JokeClient) CreateBulk(builders ...*JokeCreate) *JokeCreateBulk {
+	return &JokeCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Joke.
+func (c *JokeClient) Update() *JokeUpdate {
+	mutation := newJokeMutation(c.config, OpUpdate)
+	return &JokeUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *JokeClient) UpdateOne(j *Joke) *JokeUpdateOne {
+	mutation := newJokeMutation(c.config, OpUpdateOne, withJoke(j))
+	return &JokeUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *JokeClient) UpdateOneID(id int) *JokeUpdateOne {
+	mutation := newJokeMutation(c.config, OpUpdateOne, withJokeID(id))
+	return &JokeUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Joke.
+func (c *JokeClient) Delete() *JokeDelete {
+	mutation := newJokeMutation(c.config, OpDelete)
+	return &JokeDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *JokeClient) DeleteOne(j *Joke) *JokeDeleteOne {
+	return c.DeleteOneID(j.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *JokeClient) DeleteOneID(id int) *JokeDeleteOne {
+	builder := c.Delete().Where(joke.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &JokeDeleteOne{builder}
+}
+
+// Query returns a query builder for Joke.
+func (c *JokeClient) Query() *JokeQuery {
+	return &JokeQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeJoke},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Joke entity by its id.
+func (c *JokeClient) Get(ctx context.Context, id int) (*Joke, error) {
+	return c.Query().Where(joke.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *JokeClient) GetX(ctx context.Context, id int) *Joke {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *JokeClient) Hooks() []Hook {
+	return c.hooks.Joke
+}
+
+// Interceptors returns the client interceptors.
+func (c *JokeClient) Interceptors() []Interceptor {
+	return c.inters.Joke
+}
+
+func (c *JokeClient) mutate(ctx context.Context, m *JokeMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&JokeCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&JokeUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&JokeUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&JokeDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Joke mutation op: %q", m.Op())
 	}
 }

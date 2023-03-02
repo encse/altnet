@@ -9,6 +9,7 @@ import (
 	"sync"
 
 	"github.com/encse/altnet/ent/host"
+	"github.com/encse/altnet/ent/joke"
 	"github.com/encse/altnet/ent/predicate"
 	"github.com/encse/altnet/ent/schema"
 
@@ -26,6 +27,7 @@ const (
 
 	// Node types.
 	TypeHost = "Host"
+	TypeJoke = "Joke"
 )
 
 // HostMutation represents an operation that mutates the Host nodes in the graph.
@@ -35,6 +37,7 @@ type HostMutation struct {
 	typ              string
 	id               *int
 	name             *schema.HostName
+	_type            *host.Type
 	entry            *string
 	machine_type     *string
 	organization     *string
@@ -185,6 +188,42 @@ func (m *HostMutation) OldName(ctx context.Context) (v schema.HostName, err erro
 // ResetName resets all changes to the "name" field.
 func (m *HostMutation) ResetName() {
 	m.name = nil
+}
+
+// SetType sets the "type" field.
+func (m *HostMutation) SetType(h host.Type) {
+	m._type = &h
+}
+
+// GetType returns the value of the "type" field in the mutation.
+func (m *HostMutation) GetType() (r host.Type, exists bool) {
+	v := m._type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldType returns the old "type" field's value of the Host entity.
+// If the Host object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *HostMutation) OldType(ctx context.Context) (v host.Type, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldType: %w", err)
+	}
+	return oldValue.Type, nil
+}
+
+// ResetType resets all changes to the "type" field.
+func (m *HostMutation) ResetType() {
+	m._type = nil
 }
 
 // SetEntry sets the "entry" field.
@@ -639,9 +678,12 @@ func (m *HostMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *HostMutation) Fields() []string {
-	fields := make([]string, 0, 11)
+	fields := make([]string, 0, 12)
 	if m.name != nil {
 		fields = append(fields, host.FieldName)
+	}
+	if m._type != nil {
+		fields = append(fields, host.FieldType)
 	}
 	if m.entry != nil {
 		fields = append(fields, host.FieldEntry)
@@ -683,6 +725,8 @@ func (m *HostMutation) Field(name string) (ent.Value, bool) {
 	switch name {
 	case host.FieldName:
 		return m.Name()
+	case host.FieldType:
+		return m.GetType()
 	case host.FieldEntry:
 		return m.Entry()
 	case host.FieldMachineType:
@@ -714,6 +758,8 @@ func (m *HostMutation) OldField(ctx context.Context, name string) (ent.Value, er
 	switch name {
 	case host.FieldName:
 		return m.OldName(ctx)
+	case host.FieldType:
+		return m.OldType(ctx)
 	case host.FieldEntry:
 		return m.OldEntry(ctx)
 	case host.FieldMachineType:
@@ -749,6 +795,13 @@ func (m *HostMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetName(v)
+		return nil
+	case host.FieldType:
+		v, ok := value.(host.Type)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetType(v)
 		return nil
 	case host.FieldEntry:
 		v, ok := value.(string)
@@ -887,6 +940,9 @@ func (m *HostMutation) ResetField(name string) error {
 	case host.FieldName:
 		m.ResetName()
 		return nil
+	case host.FieldType:
+		m.ResetType()
+		return nil
 	case host.FieldEntry:
 		m.ResetEntry()
 		return nil
@@ -967,4 +1023,390 @@ func (m *HostMutation) ClearEdge(name string) error {
 // It returns an error if the edge is not defined in the schema.
 func (m *HostMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown Host edge %s", name)
+}
+
+// JokeMutation represents an operation that mutates the Joke nodes in the graph.
+type JokeMutation struct {
+	config
+	op            Op
+	typ           string
+	id            *int
+	body          *string
+	category      *string
+	clearedFields map[string]struct{}
+	done          bool
+	oldValue      func(context.Context) (*Joke, error)
+	predicates    []predicate.Joke
+}
+
+var _ ent.Mutation = (*JokeMutation)(nil)
+
+// jokeOption allows management of the mutation configuration using functional options.
+type jokeOption func(*JokeMutation)
+
+// newJokeMutation creates new mutation for the Joke entity.
+func newJokeMutation(c config, op Op, opts ...jokeOption) *JokeMutation {
+	m := &JokeMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeJoke,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withJokeID sets the ID field of the mutation.
+func withJokeID(id int) jokeOption {
+	return func(m *JokeMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Joke
+		)
+		m.oldValue = func(ctx context.Context) (*Joke, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Joke.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withJoke sets the old Joke of the mutation.
+func withJoke(node *Joke) jokeOption {
+	return func(m *JokeMutation) {
+		m.oldValue = func(context.Context) (*Joke, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m JokeMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m JokeMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of Joke entities.
+func (m *JokeMutation) SetID(id int) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *JokeMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *JokeMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Joke.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetBody sets the "body" field.
+func (m *JokeMutation) SetBody(s string) {
+	m.body = &s
+}
+
+// Body returns the value of the "body" field in the mutation.
+func (m *JokeMutation) Body() (r string, exists bool) {
+	v := m.body
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBody returns the old "body" field's value of the Joke entity.
+// If the Joke object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *JokeMutation) OldBody(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBody is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBody requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBody: %w", err)
+	}
+	return oldValue.Body, nil
+}
+
+// ResetBody resets all changes to the "body" field.
+func (m *JokeMutation) ResetBody() {
+	m.body = nil
+}
+
+// SetCategory sets the "category" field.
+func (m *JokeMutation) SetCategory(s string) {
+	m.category = &s
+}
+
+// Category returns the value of the "category" field in the mutation.
+func (m *JokeMutation) Category() (r string, exists bool) {
+	v := m.category
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCategory returns the old "category" field's value of the Joke entity.
+// If the Joke object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *JokeMutation) OldCategory(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCategory is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCategory requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCategory: %w", err)
+	}
+	return oldValue.Category, nil
+}
+
+// ResetCategory resets all changes to the "category" field.
+func (m *JokeMutation) ResetCategory() {
+	m.category = nil
+}
+
+// Where appends a list predicates to the JokeMutation builder.
+func (m *JokeMutation) Where(ps ...predicate.Joke) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the JokeMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *JokeMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Joke, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *JokeMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *JokeMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (Joke).
+func (m *JokeMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *JokeMutation) Fields() []string {
+	fields := make([]string, 0, 2)
+	if m.body != nil {
+		fields = append(fields, joke.FieldBody)
+	}
+	if m.category != nil {
+		fields = append(fields, joke.FieldCategory)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *JokeMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case joke.FieldBody:
+		return m.Body()
+	case joke.FieldCategory:
+		return m.Category()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *JokeMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case joke.FieldBody:
+		return m.OldBody(ctx)
+	case joke.FieldCategory:
+		return m.OldCategory(ctx)
+	}
+	return nil, fmt.Errorf("unknown Joke field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *JokeMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case joke.FieldBody:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBody(v)
+		return nil
+	case joke.FieldCategory:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCategory(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Joke field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *JokeMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *JokeMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *JokeMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown Joke numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *JokeMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *JokeMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *JokeMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown Joke nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *JokeMutation) ResetField(name string) error {
+	switch name {
+	case joke.FieldBody:
+		m.ResetBody()
+		return nil
+	case joke.FieldCategory:
+		m.ResetCategory()
+		return nil
+	}
+	return fmt.Errorf("unknown Joke field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *JokeMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *JokeMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *JokeMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *JokeMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *JokeMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *JokeMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *JokeMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown Joke unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *JokeMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown Joke edge %s", name)
 }

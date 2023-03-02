@@ -36,7 +36,7 @@ function dev() {
 
 # start with ./service dev, then run ./service gobuild to rebuild all cmds
 function gobuild() {
-    docker exec -w /src altnet  go install ./cmd/...
+    docker exec -w /src altnet go install -ldflags="-s -w"  ./cmd/...
 }
 
 function stop() {

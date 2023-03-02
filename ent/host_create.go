@@ -26,6 +26,12 @@ func (hc *HostCreate) SetName(sn schema.HostName) *HostCreate {
 	return hc
 }
 
+// SetType sets the "type" field.
+func (hc *HostCreate) SetType(h host.Type) *HostCreate {
+	hc.mutation.SetType(h)
+	return hc
+}
+
 // SetEntry sets the "entry" field.
 func (hc *HostCreate) SetEntry(s string) *HostCreate {
 	hc.mutation.SetEntry(s)
@@ -224,6 +230,14 @@ func (hc *HostCreate) check() error {
 	if _, ok := hc.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Host.name"`)}
 	}
+	if _, ok := hc.mutation.GetType(); !ok {
+		return &ValidationError{Name: "type", err: errors.New(`ent: missing required field "Host.type"`)}
+	}
+	if v, ok := hc.mutation.GetType(); ok {
+		if err := host.TypeValidator(v); err != nil {
+			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "Host.type": %w`, err)}
+		}
+	}
 	if _, ok := hc.mutation.Entry(); !ok {
 		return &ValidationError{Name: "entry", err: errors.New(`ent: missing required field "Host.entry"`)}
 	}
@@ -277,6 +291,10 @@ func (hc *HostCreate) createSpec() (*Host, *sqlgraph.CreateSpec) {
 	if value, ok := hc.mutation.Name(); ok {
 		_spec.SetField(host.FieldName, field.TypeString, value)
 		_node.Name = value
+	}
+	if value, ok := hc.mutation.GetType(); ok {
+		_spec.SetField(host.FieldType, field.TypeEnum, value)
+		_node.Type = value
 	}
 	if value, ok := hc.mutation.Entry(); ok {
 		_spec.SetField(host.FieldEntry, field.TypeString, value)

@@ -14,11 +14,12 @@ func Center(st string, width int) string {
 		}
 	}
 	for i, line := range lines {
-		pad := (width - maxWidth) / 2
-		if line == "" || pad <= 0 {
+		padLeft := (width - maxWidth) / 2
+		padRight := width - maxWidth - padLeft
+		if padLeft <= 0 {
 			continue
 		}
-		lines[i] = strings.Repeat(" ", pad) + line
+		lines[i] = strings.Repeat(" ", padLeft) + line + strings.Repeat(" ", padRight)
 	}
 	return strings.Join(lines, "\n")
 }

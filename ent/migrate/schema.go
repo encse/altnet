@@ -12,6 +12,7 @@ var (
 	HostsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "name", Type: field.TypeString, Unique: true},
+		{Name: "type", Type: field.TypeEnum, Enums: []string{"bbs", "uucp"}},
 		{Name: "entry", Type: field.TypeString, Default: ""},
 		{Name: "machine_type", Type: field.TypeString, Default: ""},
 		{Name: "organization", Type: field.TypeString, Default: ""},
@@ -29,9 +30,22 @@ var (
 		Columns:    HostsColumns,
 		PrimaryKey: []*schema.Column{HostsColumns[0]},
 	}
+	// JokesColumns holds the columns for the "jokes" table.
+	JokesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "body", Type: field.TypeString},
+		{Name: "category", Type: field.TypeString},
+	}
+	// JokesTable holds the schema information for the "jokes" table.
+	JokesTable = &schema.Table{
+		Name:       "jokes",
+		Columns:    JokesColumns,
+		PrimaryKey: []*schema.Column{JokesColumns[0]},
+	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		HostsTable,
+		JokesTable,
 	}
 )
 

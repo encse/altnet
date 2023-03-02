@@ -8,3 +8,6 @@ import (
 
 // Host is the predicate function for host builders.
 type Host func(*sql.Selector)
+
+// Joke is the predicate function for joke builders.
+type Joke func(*sql.Selector)

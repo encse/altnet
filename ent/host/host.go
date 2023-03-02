@@ -2,6 +2,10 @@
 
 package host
 
+import (
+	"fmt"
+)
+
 const (
 	// Label holds the string label denoting the host type in the database.
 	Label = "host"
@@ -9,6 +13,8 @@ const (
 	FieldID = "id"
 	// FieldName holds the string denoting the name field in the database.
 	FieldName = "name"
+	// FieldType holds the string denoting the type field in the database.
+	FieldType = "type"
 	// FieldEntry holds the string denoting the entry field in the database.
 	FieldEntry = "entry"
 	// FieldMachineType holds the string denoting the machine_type field in the database.
@@ -37,6 +43,7 @@ const (
 var Columns = []string{
 	FieldID,
 	FieldName,
+	FieldType,
 	FieldEntry,
 	FieldMachineType,
 	FieldOrganization,
@@ -77,3 +84,26 @@ var (
 	// DefaultGeoLocation holds the default value on creation for the "geo_location" field.
 	DefaultGeoLocation string
 )
+
+// Type defines the type for the "type" enum field.
+type Type string
+
+// Type values.
+const (
+	TypeBbs  Type = "bbs"
+	TypeUucp Type = "uucp"
+)
+
+func (_type Type) String() string {
+	return string(_type)
+}
+
+// TypeValidator is a validator for the "type" field enum values. It is called by the builders before save.
+func TypeValidator(_type Type) error {
+	switch _type {
+	case TypeBbs, TypeUucp:
+		return nil
+	default:
+		return fmt.Errorf("host: invalid enum value for type field: %q", _type)
+	}
+}

@@ -183,6 +183,26 @@ func NameContainsFold(v schema.HostName) predicate.Host {
 	return predicate.Host(sql.FieldContainsFold(FieldName, vc))
 }
 
+// TypeEQ applies the EQ predicate on the "type" field.
+func TypeEQ(v Type) predicate.Host {
+	return predicate.Host(sql.FieldEQ(FieldType, v))
+}
+
+// TypeNEQ applies the NEQ predicate on the "type" field.
+func TypeNEQ(v Type) predicate.Host {
+	return predicate.Host(sql.FieldNEQ(FieldType, v))
+}
+
+// TypeIn applies the In predicate on the "type" field.
+func TypeIn(vs ...Type) predicate.Host {
+	return predicate.Host(sql.FieldIn(FieldType, vs...))
+}
+
+// TypeNotIn applies the NotIn predicate on the "type" field.
+func TypeNotIn(vs ...Type) predicate.Host {
+	return predicate.Host(sql.FieldNotIn(FieldType, vs...))
+}
+
 // EntryEQ applies the EQ predicate on the "entry" field.
 func EntryEQ(v string) predicate.Host {
 	return predicate.Host(sql.FieldEQ(FieldEntry, v))

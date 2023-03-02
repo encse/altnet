@@ -6,6 +6,7 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqljson"
+	"github.com/encse/altnet/ent"
 	"github.com/encse/altnet/ent/host"
 	"github.com/encse/altnet/ent/schema"
 )
@@ -42,24 +43,24 @@ func (n Network) FindPhoneNumbersWithPrefix(ctx context.Context, prefix string) 
 // extension is provided in the phone number we return with failure.
 // This is analogous to dialing a number: if the extension is not needed, it is simply
 // ignored.
-func (n Network) LookupHostByPhone(ctx context.Context, phoneNumber schema.PhoneNumber) (schema.HostName, error) {
+func (n Network) LookupHostByPhone(ctx context.Context, phoneNumber schema.PhoneNumber) (*ent.Host, error) {
 	host, err := n.lookupHostByPhoneI(ctx, phoneNumber)
 	if err != nil {
-		return schema.HostName(""), err
+		return nil, err
 	}
-	if host != "" {
+	if host != nil {
 		return host, nil
 	}
 
 	withoutExt, err := schema.ParsePhoneNumberSkipExtension(string(phoneNumber))
 	if err != nil {
-		return schema.HostName(""), nil
+		return nil, nil
 	}
 
 	return n.lookupHostByPhoneI(ctx, schema.PhoneNumber(withoutExt))
 }
 
-func (n Network) lookupHostByPhoneI(ctx context.Context, phoneNumber schema.PhoneNumber) (schema.HostName, error) {
+func (n Network) lookupHostByPhoneI(ctx context.Context, phoneNumber schema.PhoneNumber) (*ent.Host, error) {
 	hosts, err := n.client.Host.
 		Query().
 		Where(func(s *sql.Selector) {
@@ -67,12 +68,12 @@ func (n Network) lookupHostByPhoneI(ctx context.Context, phoneNumber schema.Phon
 		}).All(ctx)
 
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	if len(hosts) == 0 {
-		return "", nil
+		return nil, nil
 	}
 
-	return hosts[0].Name, nil
+	return hosts[0], nil
 }

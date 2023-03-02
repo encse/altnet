@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/encse/altnet/ent/host"
+	"github.com/encse/altnet/ent/joke"
 )
 
 // ent aliases to avoid import conflicts in user's code.
@@ -40,6 +41,7 @@ type OrderFunc func(*sql.Selector)
 func columnChecker(table string) func(string) error {
 	checks := map[string]func(string) bool{
 		host.Table: host.ValidColumn,
+		joke.Table: joke.ValidColumn,
 	}
 	check, ok := checks[table]
 	if !ok {

@@ -58,6 +58,21 @@ func Chunk[E any](items []E, chunkSize int) [][]E {
 	return chunks
 }
 
+func Max[A constraints.Ordered](items []A) A {
+	if len(items) == 0 {
+		var res A
+		return res
+	} else {
+		res := items[0]
+		for _, a := range items {
+			if a > res {
+				res = a
+			}
+		}
+		return res
+	}
+}
+
 func Map[A any, B any](items []A, f func(a A) B) []B {
 	res := make([]B, 0, len(items))
 	for _, a := range items {

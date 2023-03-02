@@ -29,6 +29,12 @@ func (hu *HostUpdate) Where(ps ...predicate.Host) *HostUpdate {
 	return hu
 }
 
+// SetType sets the "type" field.
+func (hu *HostUpdate) SetType(h host.Type) *HostUpdate {
+	hu.mutation.SetType(h)
+	return hu
+}
+
 // SetEntry sets the "entry" field.
 func (hu *HostUpdate) SetEntry(s string) *HostUpdate {
 	hu.mutation.SetEntry(s)
@@ -209,7 +215,20 @@ func (hu *HostUpdate) ExecX(ctx context.Context) {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (hu *HostUpdate) check() error {
+	if v, ok := hu.mutation.GetType(); ok {
+		if err := host.TypeValidator(v); err != nil {
+			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "Host.type": %w`, err)}
+		}
+	}
+	return nil
+}
+
 func (hu *HostUpdate) sqlSave(ctx context.Context) (n int, err error) {
+	if err := hu.check(); err != nil {
+		return n, err
+	}
 	_spec := sqlgraph.NewUpdateSpec(host.Table, host.Columns, sqlgraph.NewFieldSpec(host.FieldID, field.TypeInt))
 	if ps := hu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
@@ -217,6 +236,9 @@ func (hu *HostUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := hu.mutation.GetType(); ok {
+		_spec.SetField(host.FieldType, field.TypeEnum, value)
 	}
 	if value, ok := hu.mutation.Entry(); ok {
 		_spec.SetField(host.FieldEntry, field.TypeString, value)
@@ -282,6 +304,12 @@ type HostUpdateOne struct {
 	fields   []string
 	hooks    []Hook
 	mutation *HostMutation
+}
+
+// SetType sets the "type" field.
+func (huo *HostUpdateOne) SetType(h host.Type) *HostUpdateOne {
+	huo.mutation.SetType(h)
+	return huo
 }
 
 // SetEntry sets the "entry" field.
@@ -477,7 +505,20 @@ func (huo *HostUpdateOne) ExecX(ctx context.Context) {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (huo *HostUpdateOne) check() error {
+	if v, ok := huo.mutation.GetType(); ok {
+		if err := host.TypeValidator(v); err != nil {
+			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "Host.type": %w`, err)}
+		}
+	}
+	return nil
+}
+
 func (huo *HostUpdateOne) sqlSave(ctx context.Context) (_node *Host, err error) {
+	if err := huo.check(); err != nil {
+		return _node, err
+	}
 	_spec := sqlgraph.NewUpdateSpec(host.Table, host.Columns, sqlgraph.NewFieldSpec(host.FieldID, field.TypeInt))
 	id, ok := huo.mutation.ID()
 	if !ok {
@@ -502,6 +543,9 @@ func (huo *HostUpdateOne) sqlSave(ctx context.Context) (_node *Host, err error) 
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := huo.mutation.GetType(); ok {
+		_spec.SetField(host.FieldType, field.TypeEnum, value)
 	}
 	if value, ok := huo.mutation.Entry(); ok {
 		_spec.SetField(host.FieldEntry, field.TypeString, value)
