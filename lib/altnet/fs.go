@@ -63,9 +63,15 @@ func Files(ctx context.Context) ([]FileInfo, error) {
 		}
 
 		for _, file := range files {
+			// resolve symlinks
+			fi, err := os.Stat(path.Join(dir, file.Name()))
+			if err != nil {
+				log.Error()
+				continue
+			}
 			res = append(res,
 				FileInfo{
-					fsFileInfo: file,
+					fsFileInfo: fi,
 					realPath:   path.Join(dir, file.Name()),
 				})
 		}

@@ -26,7 +26,7 @@ func FindPaths(
 		Neighbours []schema.HostName
 	}
 
-	err := network.client.Host.
+	err := network.Client.Host.
 		Query().
 		Where(host.NeighboursNotNil()).
 		Select(host.FieldName, host.FieldNeighbours).

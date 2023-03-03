@@ -3,9 +3,9 @@ package main
 import (
 	"context"
 	"fmt"
-	"sort"
 
-	"github.com/encse/altnet/ent/schema"
+	"github.com/encse/altnet/ent"
+	"github.com/encse/altnet/ent/host"
 	"github.com/encse/altnet/lib/io"
 	"github.com/encse/altnet/lib/uumap"
 )
@@ -16,16 +16,26 @@ func main() {
 	io.FatalIfError(err)
 	defer network.Close()
 
-	keys, err := network.Hosts(ctx)
-	io.FatalIfError(err)
-	sort.Strings(keys)
+	var hosts []struct {
+		Name         string `json:"name,omitempty"`
+		Organization string `json:"organization,omitempty"`
+		Location     string `json:"location,omitempty"`
+	}
 
-	rows := make([][]string, 0, len(keys)+2)
+	err = network.Client.Host.
+		Query().
+		Where(host.TypeIn(host.TypeUucp)).
+		Order(ent.Asc(host.FieldName)).
+		Select(host.FieldName, host.FieldOrganization, host.FieldLocation).
+		Scan(ctx, &hosts)
+
+	io.FatalIfError(err)
+
+	rows := make([][]string, 0, len(hosts)+2)
 	rows = append(rows, []string{"host", "organization", "location"})
 	rows = append(rows, []string{"----", "------------", "--------"})
 
-	for _, key := range keys {
-		host, _ := network.Lookup(ctx, schema.HostName(key))
+	for _, host := range hosts {
 		rows = append(rows, []string{
 			string(host.Name),
 			io.Substring(string(host.Organization), 32),

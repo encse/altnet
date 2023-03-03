@@ -8,7 +8,7 @@ import (
 
 func (n Network) Joke(ctx context.Context) (string, error) {
 
-	joke, err := n.client.Joke.
+	joke, err := n.Client.Joke.
 		Query().
 		Order(func(s *sql.Selector) {
 			s.OrderBy("RANDOM()")

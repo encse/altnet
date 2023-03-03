@@ -17,7 +17,7 @@ func (n Network) FindPhoneNumbersWithPrefix(ctx context.Context, prefix string) 
 		Phone []schema.PhoneNumber
 	}
 
-	err := n.client.Host.
+	err := n.Client.Host.
 		Query().
 		Select(host.FieldPhone).
 		Scan(ctx, &vs)
@@ -61,7 +61,7 @@ func (n Network) LookupHostByPhone(ctx context.Context, phoneNumber schema.Phone
 }
 
 func (n Network) lookupHostByPhoneI(ctx context.Context, phoneNumber schema.PhoneNumber) (*ent.Host, error) {
-	hosts, err := n.client.Host.
+	hosts, err := n.Client.Host.
 		Query().
 		Where(func(s *sql.Selector) {
 			s.Where(sqljson.ValueContains(host.FieldPhone, phoneNumber))
