@@ -140,6 +140,7 @@ func filesArea(ctx context.Context, host *ent.Host, width int) error {
 				return err
 			} else if strings.ToUpper(option) == "P" {
 				printFile(ctx, files[idx].Name())
+				fmt.Println()
 				break
 			} else if strings.ToUpper(option) == "D" {
 				downloadFile(ctx, files[idx].Name())
