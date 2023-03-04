@@ -32,5 +32,5 @@ func main() {
 	}
 
 	lines := slices.Chunk(names, columns/(maxWidth+2))
-	fmt.Println(io.Table(lines...))
+	fmt.Print(io.Table(lines...))
 }

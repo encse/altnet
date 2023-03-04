@@ -52,9 +52,9 @@ func main() {
 			if exe != "" {
 				altnet.RunCommand(ctx, exe, parts[1:]...)
 			} else if parts[0] == "?" {
-				fmt.Println(io.Table(commands...))
+				fmt.Print(io.Table(commands...))
 			} else if parts[0] == "help" {
-				fmt.Println(io.Table(commands...))
+				fmt.Print(io.Table(commands...))
 			} else if parts[0] == "exit" {
 				return
 			} else if parts[0] == "quit" {

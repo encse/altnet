@@ -36,7 +36,7 @@ func main() {
 			},
 		)
 	}
-	fmt.Println(io.Table(proctable...))
+	fmt.Print(io.Table(proctable...))
 }
 
 func formatDate(t time.Time) string {

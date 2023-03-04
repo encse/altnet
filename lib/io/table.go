@@ -23,5 +23,5 @@ func Table(lines ...[]string) string {
 		}
 		res = append(res, line)
 	}
-	return strings.Join(res, "\n")
+	return strings.Join(res, "\n") + "\n"
 }

@@ -149,6 +149,22 @@ func seedHost(ctx context.Context, hostName schema.HostName) error {
 		return err
 	}
 
+	if hostName != "csokavar" {
+		err = addRandomFiles(hostName, targetDir)
+		if err != nil {
+			log.Warn(fmt.Errorf("could not add random files, %v", err))
+		}
+	}
+
+	err = createBbsList(ctx, targetDir)
+	if err != nil {
+		log.Warn(fmt.Errorf("could not create bbslist.txt, %v", err))
+	}
+
+	return nil
+}
+
+func addRandomFiles(hostName schema.HostName, targetDir string) error {
 	seedFiles, err := getAllFiles(seedRoot)
 	if err != nil {
 		return err
@@ -177,25 +193,15 @@ func seedHost(ctx context.Context, hostName schema.HostName) error {
 			}
 		}
 	}
-
-	bbslist, err := CreateBbsList(ctx)
-	if err != nil {
-		return fmt.Errorf("could not create bbslist.txt, %v", err)
-	}
-
-	return os.WriteFile(
-		path.Join(targetDir, "bbslist.txt"),
-		[]byte(bbslist),
-		0644,
-	)
+	return nil
 }
 
 // createBbsList randomly picks 20 bbs-es from the hosts database
-func CreateBbsList(ctx context.Context) (string, error) {
+func createBbsList(ctx context.Context, targetDir string) error {
 	network, err := uumap.NetworkConn()
 
 	if err != nil {
-		return "", err
+		return err
 	}
 	defer network.Close()
 	hosts, err := network.Client.Host.
@@ -210,7 +216,7 @@ func CreateBbsList(ctx context.Context) (string, error) {
 		All(ctx)
 
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	lines := make([][]string, 0, len(hosts))
@@ -224,7 +230,12 @@ func CreateBbsList(ctx context.Context) (string, error) {
 		}
 	}
 
-	return io.Table(lines...), nil
+	st := io.Table(lines...)
+	return os.WriteFile(
+		path.Join(targetDir, "bbslist.txt"),
+		[]byte(st),
+		0644,
+	)
 }
 
 func fileExists(file string) (bool, error) {

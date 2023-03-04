@@ -8,3 +8,4 @@ env
 data/textfiles
 data/altnet/*
 !/data/altnet/csokavar
+data/altnet/csokavar/seed

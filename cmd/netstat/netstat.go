@@ -44,5 +44,5 @@ func main() {
 		})
 	}
 
-	fmt.Println(io.Table(rows...))
+	fmt.Print(io.Table(rows...))
 }
