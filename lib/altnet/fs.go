@@ -3,6 +3,7 @@ package altnet
 import (
 	"context"
 	"errors"
+	"fmt"
 	"hash/fnv"
 	"io/fs"
 	"io/ioutil"
@@ -12,9 +13,12 @@ import (
 	"path/filepath"
 	"time"
 
+	"entgo.io/ent/dialect/sql"
+	"github.com/encse/altnet/ent/host"
 	"github.com/encse/altnet/ent/schema"
 	"github.com/encse/altnet/lib/io"
 	"github.com/encse/altnet/lib/log"
+	"github.com/encse/altnet/lib/uumap"
 )
 
 const altnetRoot = "data/altnet"
@@ -43,7 +47,7 @@ func Files(ctx context.Context) ([]FileInfo, error) {
 		return nil, err
 	}
 
-	seedHost(host)
+	seedHost(ctx, host)
 
 	res := make([]FileInfo, 0)
 
@@ -123,8 +127,8 @@ func getAltnetSystemDir(host schema.HostName) string {
 	return path.Join(altnetRoot, string(host), "sys")
 }
 
-func seedHost(host schema.HostName) error {
-	targetDir := getAltnetSeedDir(host)
+func seedHost(ctx context.Context, hostName schema.HostName) error {
+	targetDir := getAltnetSeedDir(hostName)
 
 	targetDir, err := filepath.Abs(targetDir)
 	if err != nil {
@@ -150,7 +154,7 @@ func seedHost(host schema.HostName) error {
 		return err
 	}
 
-	r := newRand(string(host))
+	r := newRand(string(hostName))
 	batchCount := r.Int()%5 + 2
 
 	for i := 0; i < batchCount; i++ {
@@ -173,7 +177,54 @@ func seedHost(host schema.HostName) error {
 			}
 		}
 	}
-	return nil
+
+	bbslist, err := CreateBbsList(ctx)
+	if err != nil {
+		return fmt.Errorf("could not create bbslist.txt, %v", err)
+	}
+
+	return os.WriteFile(
+		path.Join(targetDir, "bbslist.txt"),
+		[]byte(bbslist),
+		0644,
+	)
+}
+
+// createBbsList randomly picks 20 bbs-es from the hosts database
+func CreateBbsList(ctx context.Context) (string, error) {
+	network, err := uumap.NetworkConn()
+
+	if err != nil {
+		return "", err
+	}
+	defer network.Close()
+	hosts, err := network.Client.Host.
+		Query().
+		Where(
+			host.TypeEQ(host.TypeBbs),
+		).
+		Order(func(s *sql.Selector) {
+			s.OrderBy("RANDOM()")
+		}).
+		Limit(20).
+		All(ctx)
+
+	if err != nil {
+		return "", err
+	}
+
+	lines := make([][]string, 0, len(hosts))
+	for i, host := range hosts {
+		if len(host.Phone) > 0 {
+			lines = append(lines, []string{
+				fmt.Sprintf("%02d.", i+1),
+				host.Organization,
+				host.Phone[0].ToUsLocalString(),
+			})
+		}
+	}
+
+	return io.Table(lines...), nil
 }
 
 func fileExists(file string) (bool, error) {

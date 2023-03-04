@@ -118,6 +118,7 @@ func filesArea(ctx context.Context, host *ent.Host, width int) error {
 
 	for {
 		listFiles(files, width)
+
 		item, err := io.Readline(fmt.Sprintf("Select file (%d-%d): ", 1, len(files)))
 		idx := 0
 		if err == nil {
@@ -128,6 +129,8 @@ func filesArea(ctx context.Context, host *ent.Host, width int) error {
 			fmt.Println("ERROR: File not found.")
 			return nil
 		}
+
+		idx--
 
 		for {
 			option, err := io.Readline("Do you want to (P)rint, (D)ownload or (C)ancel? ")
@@ -194,7 +197,7 @@ func listFiles(files []altnet.FileInfo, width int) {
 		items = append(items, row)
 	}
 
-	d := len(items) / 2
+	d := (len(items) + 1) / 2
 	for i := 0; i < d; i++ {
 		fmt.Print(items[i])
 		fmt.Print("  ")
