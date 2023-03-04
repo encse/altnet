@@ -34,6 +34,14 @@ func (pn PhoneNumber) Next() (PhoneNumber, bool) {
 	return PhoneNumber(lib.Format(repr, lib.INTERNATIONAL)), true
 }
 
+func (pn PhoneNumber) ToUsLocalString() string {
+	repr, err := lib.Parse(string(pn), "US")
+	if err != nil {
+		return string(pn)
+	}
+	return lib.Format(repr, lib.NATIONAL)
+}
+
 func (pn PhoneNumber) ToAtdtString() (string, error) {
 	repr, err := lib.Parse(string(pn), "US")
 	if err != nil {

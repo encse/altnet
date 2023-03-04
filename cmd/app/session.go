@@ -84,6 +84,7 @@ func (session Session) Run(ctx context.Context) error {
 		fmt.Sprintf("CONNECTED_FROM=%v", session.connectedFrom),
 		fmt.Sprintf("ALTNET_HOST=%v", "csokavar"),
 		fmt.Sprintf("ALTNET_SESSION=%v", session.sessionId),
+		fmt.Sprintf("TERM=%v", "xterm-color"),
 	)
 
 	cmd.Stderr = os.Stderr

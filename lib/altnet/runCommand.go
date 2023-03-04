@@ -3,6 +3,7 @@ package altnet
 import (
 	"context"
 	"fmt"
+	stdio "io"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -12,15 +13,27 @@ import (
 	"github.com/encse/altnet/lib/log"
 )
 
+func RunHiddenCommandWithStdErrRedirectedToStdout(ctx context.Context, name string, arg ...string) {
+	runAs(ctx, os.Stdin, os.Stdout, os.Stdout, true, name, arg...)
+}
+
 func RunHiddenCommand(ctx context.Context, name string, arg ...string) {
-	runAs(ctx, true, name, arg...)
+	runAs(ctx, os.Stdin, os.Stdout, os.Stderr, true, name, arg...)
 }
 
 func RunCommand(ctx context.Context, name string, arg ...string) {
-	runAs(ctx, false, name, arg...)
+	runAs(ctx, os.Stdin, os.Stdout, os.Stderr, false, name, arg...)
 }
 
-func runAs(ctx context.Context, hidden bool, name string, arg ...string) {
+func runAs(
+	ctx context.Context,
+	stdin stdio.Reader,
+	stdout stdio.Writer,
+	stderr stdio.Writer,
+	hidden bool,
+	name string,
+	arg ...string,
+) {
 	log.Info("run", name, arg)
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
@@ -31,9 +44,9 @@ func runAs(ctx context.Context, hidden bool, name string, arg ...string) {
 		}
 	}()
 	cmd := exec.Command(name, arg...)
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	cmd.Stdin = stdin
+	cmd.Stdout = stdout
+	cmd.Stderr = stderr
 	cmd.Env = ContextToEnv(os.Environ(), ctx)
 	if hidden {
 		cmd.Env = append(cmd.Env, fmt.Sprintf("ALTNET_EXE="))

@@ -103,6 +103,16 @@ func Open(ctx context.Context, name string) (*os.File, error) {
 	return os.Open(fi.RealPath())
 }
 
+func Cat(ctx context.Context, fi FileInfo) error {
+	RunHiddenCommandWithStdErrRedirectedToStdout(ctx, "/bin/cat", fi.RealPath())
+	return nil
+}
+
+func More(ctx context.Context, fi FileInfo) error {
+	RunHiddenCommandWithStdErrRedirectedToStdout(ctx, "/bin/more", fi.RealPath())
+	return nil
+}
+
 func getAltnetUserDir(host schema.HostName, user User) string {
 	return path.Join(altnetRoot, string(host), "usr", string(user))
 }

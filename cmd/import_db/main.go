@@ -49,6 +49,14 @@ func main() {
 	if err != nil {
 		fmt.Println("could not import jokes", err)
 	}
+
+	// Steve Jacksons's BBS
+	client.Host.
+		Update().
+		Where(host.Name(schema.HostName("fnordbox"))).
+		SetType(host.TypeBbs).
+		Exec(ctx)
+
 }
 
 func importJokes(ctx context.Context, client *ent.Client) error {
@@ -91,12 +99,13 @@ func importBbs(ctx context.Context, client *ent.Client) error {
 	io.FatalIfError(err)
 
 	type entry struct {
-		Phone    string `json:"phone"`
-		Names    string `json:"names"`
-		Location string `json:"location"`
-		Sysop    string `json:"sysop"`
-		YearFrom int    `json:"year_from"`
-		YearTo   int    `json:"year_to"`
+		Phone      string `json:"phone"`
+		Names      string `json:"names"`
+		Location   string `json:"location"`
+		Sysop      string `json:"sysop"`
+		SystemName string `json:"system_name"`
+		YearFrom   int    `json:"year_from"`
+		YearTo     int    `json:"year_to"`
 	}
 
 	var entries []entry
@@ -124,21 +133,22 @@ func importBbs(ctx context.Context, client *ent.Client) error {
 			continue
 		}
 
-		name := schema.HostName(names[0])
+		systemName := schema.HostName(entry.SystemName)
 		_, err := client.Host.Create().
 			SetType(host.TypeBbs).
-			SetName(name).
+			SetName(systemName).
+			SetOrganization(names[0]).
 			SetContact(sysops[0]).
 			SetPhone([]schema.PhoneNumber{schema.PhoneNumber(entry.Phone)}).
 			SetLocation(entry.Location).
 			Save(ctx)
 
 		if err != nil {
-			fmt.Println(name, err)
+			fmt.Println(systemName, err)
 			continue
 		}
 
-		fmt.Print(names[0] + "                     \r")
+		fmt.Print(systemName + "                     \r")
 	}
 	return nil
 }

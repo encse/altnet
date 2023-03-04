@@ -3,8 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	stdio "io"
-	"os"
 	"strconv"
 	"strings"
 	"syscall"
@@ -13,7 +11,6 @@ import (
 	"github.com/encse/altnet/ent"
 	"github.com/encse/altnet/lib/altnet"
 	"github.com/encse/altnet/lib/io"
-	"github.com/encse/altnet/lib/log"
 	"github.com/encse/altnet/lib/slices"
 	"github.com/encse/altnet/lib/uumap"
 	"golang.org/x/term"
@@ -41,20 +38,19 @@ func main() {
 	host, err := network.Lookup(ctx, hostName)
 	io.FatalIfError(err)
 
+	fmt.Printf("Connected to %s.\n", strings.ToUpper(string(host.Name)))
+	fmt.Println()
 	fmt.Println(
 		io.Center(
 			io.Box(
 				"",
-				string(host.Name),
-				"",
-				"10 gigs    4 lines",
-				"",
-				"Call "+string(host.Phone[0]),
+				string(host.Organization),
+				host.Phone[0].ToUsLocalString(),
 				"",
 				"SupraFAXModem V.32bis, DataDrive BBS 3600",
+				"10 gigs    4 lines",
 				"",
 				"SYSOP: "+host.Contact,
-				"",
 				host.Location,
 				"",
 			), width))
@@ -120,9 +116,8 @@ func filesArea(ctx context.Context, host *ent.Host, width int) error {
 		return err
 	}
 
-	listFiles(files, width)
-
 	for {
+		listFiles(files, width)
 		item, err := io.Readline(fmt.Sprintf("Select file (%d-%d): ", 1, len(files)))
 		idx := 0
 		if err == nil {
@@ -157,22 +152,19 @@ func downloadFile(ctx context.Context, name string) error {
 	fmt.Println("Connecting...")
 	time.Sleep(2 * time.Second)
 	fmt.Println("Failed to connect, check that XMODEM is running on your host.")
+	fmt.Println("Press <any> key to continue.")
+	io.ReadKey()
 	return nil
 }
 
 func printFile(ctx context.Context, name string) error {
-	fd, err := altnet.Open(ctx, name)
-	io.FatalIfError(err)
+	fi, err := altnet.GetFileInfo(ctx, name)
+	if err != nil {
+		return err
+	}
 
-	defer func() {
-		err := fd.Close()
-		if err != nil {
-			log.Error(err)
-		}
-	}()
-
-	_, err = stdio.Copy(os.Stdout, fd)
-	return err
+	altnet.More(ctx, fi)
+	return nil
 }
 
 func listFiles(files []altnet.FileInfo, width int) {
