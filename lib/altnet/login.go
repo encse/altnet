@@ -38,8 +38,10 @@ func Login(ctx context.Context, h *ent.Host) {
 			fmt.Println("Welcome", username)
 			RunHiddenCommand(ctx, "./shell")
 		}
-	} else {
+	} else if h.Type == host.TypeBbs {
 		RunHiddenCommand(ctx, "./datadrivebbs")
+	} else {
+		RunHiddenCommand(ctx, "./milnet")
 	}
 }
 

@@ -101,3 +101,11 @@ func Choose[A any](items []A) (A, error) {
 	var zero A
 	return zero, errors.New("slice is empty")
 }
+
+func ChooseX[A any](items []A) A {
+	n, err := Choose(items)
+	if err != nil {
+		panic(err)
+	}
+	return n
+}

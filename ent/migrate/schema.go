@@ -12,7 +12,7 @@ var (
 	HostsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "name", Type: field.TypeString, Unique: true},
-		{Name: "type", Type: field.TypeEnum, Enums: []string{"bbs", "uucp"}},
+		{Name: "type", Type: field.TypeEnum, Enums: []string{"bbs", "uucp", "mil"}},
 		{Name: "entry", Type: field.TypeString, Default: ""},
 		{Name: "machine_type", Type: field.TypeString, Default: ""},
 		{Name: "organization", Type: field.TypeString, Default: ""},

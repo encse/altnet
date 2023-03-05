@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"strings"
 
 	"github.com/encse/altnet/ent"
@@ -38,6 +39,11 @@ func main() {
 	err = importBbs(ctx, client)
 	if err != nil {
 		fmt.Println("could not import bbs hosts", err)
+	}
+
+	err = importMilHosts(ctx, client)
+	if err != nil {
+		fmt.Println("could not import mil hosts", err)
 	}
 
 	err = importCsokavar(ctx, client)
@@ -206,4 +212,49 @@ func importCsokavar(ctx context.Context, client *ent.Client) error {
 		}).
 		Save(ctx)
 	return err
+}
+
+func importMilHosts(ctx context.Context, client *ent.Client) error {
+	input, err := ioutil.ReadFile("data/mil.json")
+	if err != nil {
+		return err
+	}
+
+	type entry struct {
+		Organization string `json:"organization"`
+		Location     string `json:"location"`
+		SystemName   string `json:"system_name"`
+	}
+
+	var repr []entry
+	err = json.Unmarshal(input, &repr)
+	if err != nil {
+		return err
+	}
+
+	for _, v := range repr {
+		// create a fake number
+		st := "+1 808"
+		st += fmt.Sprintf("%d", rand.Intn(9)+1)
+
+		for i := 0; i < 6; i++ {
+			st += fmt.Sprintf("%d", rand.Intn(10))
+		}
+		phone, err := schema.ParsePhoneNumber(st)
+		io.FatalIfError(err)
+
+		h, err := client.Host.Create().
+			SetName(schema.HostName(v.SystemName)).
+			SetType(host.TypeMil).
+			SetOrganization(v.Organization).
+			SetPhone([]schema.PhoneNumber{phone}).
+			SetLocation(v.Location).
+			Save(ctx)
+		if err != nil {
+			fmt.Println(v.SystemName, err)
+			continue
+		}
+		fmt.Print(h.Name + "                     \r")
+	}
+	return nil
 }
