@@ -35,10 +35,16 @@ func main() {
 	fmt.Println("")
 	io.Readline("Press enter to continue")
 	fmt.Println("")
+
 	ctx := altnet.ContextFromEnv(context.Background())
 
 	realUser, err := altnet.GetRealUser(ctx)
 	io.FatalIfError(err)
+
+	if realUser == "guest" {
+		fmt.Println("Cannot run as guest, exiting.")
+		return
+	}
 
 	network, err := uumap.NetworkConn()
 	io.FatalIfError(err)
