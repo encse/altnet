@@ -7,11 +7,14 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/encse/altnet/ent/host"
 	"github.com/encse/altnet/ent/joke"
 	"github.com/encse/altnet/ent/predicate"
 	"github.com/encse/altnet/ent/schema"
+	"github.com/encse/altnet/ent/user"
+	"github.com/encse/altnet/ent/virtualuser"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
@@ -26,34 +29,42 @@ const (
 	OpUpdateOne = ent.OpUpdateOne
 
 	// Node types.
-	TypeHost = "Host"
-	TypeJoke = "Joke"
+	TypeHost        = "Host"
+	TypeJoke        = "Joke"
+	TypeUser        = "User"
+	TypeVirtualUser = "VirtualUser"
 )
 
 // HostMutation represents an operation that mutates the Host nodes in the graph.
 type HostMutation struct {
 	config
-	op               Op
-	typ              string
-	id               *int
-	name             *schema.HostName
-	_type            *host.Type
-	entry            *string
-	machine_type     *string
-	organization     *string
-	contact          *string
-	contact_address  *string
-	country          *string
-	location         *string
-	geo_location     *string
-	phone            *[]schema.PhoneNumber
-	appendphone      []schema.PhoneNumber
-	neighbours       *[]schema.HostName
-	appendneighbours []schema.HostName
-	clearedFields    map[string]struct{}
-	done             bool
-	oldValue         func(context.Context) (*Host, error)
-	predicates       []predicate.Host
+	op                  Op
+	typ                 string
+	id                  *int
+	name                *schema.HostName
+	_type               *host.Type
+	entry               *string
+	machine_type        *string
+	organization        *string
+	contact             *string
+	contact_address     *string
+	country             *string
+	location            *string
+	geo_location        *string
+	phone               *[]schema.PhoneNumber
+	appendphone         []schema.PhoneNumber
+	neighbours          *[]schema.HostName
+	appendneighbours    []schema.HostName
+	clearedFields       map[string]struct{}
+	virtualusers        map[int]struct{}
+	removedvirtualusers map[int]struct{}
+	clearedvirtualusers bool
+	hackers             map[int]struct{}
+	removedhackers      map[int]struct{}
+	clearedhackers      bool
+	done                bool
+	oldValue            func(context.Context) (*Host, error)
+	predicates          []predicate.Host
 }
 
 var _ ent.Mutation = (*HostMutation)(nil)
@@ -644,6 +655,114 @@ func (m *HostMutation) ResetNeighbours() {
 	delete(m.clearedFields, host.FieldNeighbours)
 }
 
+// AddVirtualuserIDs adds the "virtualusers" edge to the VirtualUser entity by ids.
+func (m *HostMutation) AddVirtualuserIDs(ids ...int) {
+	if m.virtualusers == nil {
+		m.virtualusers = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.virtualusers[ids[i]] = struct{}{}
+	}
+}
+
+// ClearVirtualusers clears the "virtualusers" edge to the VirtualUser entity.
+func (m *HostMutation) ClearVirtualusers() {
+	m.clearedvirtualusers = true
+}
+
+// VirtualusersCleared reports if the "virtualusers" edge to the VirtualUser entity was cleared.
+func (m *HostMutation) VirtualusersCleared() bool {
+	return m.clearedvirtualusers
+}
+
+// RemoveVirtualuserIDs removes the "virtualusers" edge to the VirtualUser entity by IDs.
+func (m *HostMutation) RemoveVirtualuserIDs(ids ...int) {
+	if m.removedvirtualusers == nil {
+		m.removedvirtualusers = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.virtualusers, ids[i])
+		m.removedvirtualusers[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedVirtualusers returns the removed IDs of the "virtualusers" edge to the VirtualUser entity.
+func (m *HostMutation) RemovedVirtualusersIDs() (ids []int) {
+	for id := range m.removedvirtualusers {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// VirtualusersIDs returns the "virtualusers" edge IDs in the mutation.
+func (m *HostMutation) VirtualusersIDs() (ids []int) {
+	for id := range m.virtualusers {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetVirtualusers resets all changes to the "virtualusers" edge.
+func (m *HostMutation) ResetVirtualusers() {
+	m.virtualusers = nil
+	m.clearedvirtualusers = false
+	m.removedvirtualusers = nil
+}
+
+// AddHackerIDs adds the "hackers" edge to the User entity by ids.
+func (m *HostMutation) AddHackerIDs(ids ...int) {
+	if m.hackers == nil {
+		m.hackers = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.hackers[ids[i]] = struct{}{}
+	}
+}
+
+// ClearHackers clears the "hackers" edge to the User entity.
+func (m *HostMutation) ClearHackers() {
+	m.clearedhackers = true
+}
+
+// HackersCleared reports if the "hackers" edge to the User entity was cleared.
+func (m *HostMutation) HackersCleared() bool {
+	return m.clearedhackers
+}
+
+// RemoveHackerIDs removes the "hackers" edge to the User entity by IDs.
+func (m *HostMutation) RemoveHackerIDs(ids ...int) {
+	if m.removedhackers == nil {
+		m.removedhackers = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.hackers, ids[i])
+		m.removedhackers[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedHackers returns the removed IDs of the "hackers" edge to the User entity.
+func (m *HostMutation) RemovedHackersIDs() (ids []int) {
+	for id := range m.removedhackers {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// HackersIDs returns the "hackers" edge IDs in the mutation.
+func (m *HostMutation) HackersIDs() (ids []int) {
+	for id := range m.hackers {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetHackers resets all changes to the "hackers" edge.
+func (m *HostMutation) ResetHackers() {
+	m.hackers = nil
+	m.clearedhackers = false
+	m.removedhackers = nil
+}
+
 // Where appends a list predicates to the HostMutation builder.
 func (m *HostMutation) Where(ps ...predicate.Host) {
 	m.predicates = append(m.predicates, ps...)
@@ -979,49 +1098,111 @@ func (m *HostMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *HostMutation) AddedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 2)
+	if m.virtualusers != nil {
+		edges = append(edges, host.EdgeVirtualusers)
+	}
+	if m.hackers != nil {
+		edges = append(edges, host.EdgeHackers)
+	}
 	return edges
 }
 
 // AddedIDs returns all IDs (to other nodes) that were added for the given edge
 // name in this mutation.
 func (m *HostMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case host.EdgeVirtualusers:
+		ids := make([]ent.Value, 0, len(m.virtualusers))
+		for id := range m.virtualusers {
+			ids = append(ids, id)
+		}
+		return ids
+	case host.EdgeHackers:
+		ids := make([]ent.Value, 0, len(m.hackers))
+		for id := range m.hackers {
+			ids = append(ids, id)
+		}
+		return ids
+	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *HostMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 2)
+	if m.removedvirtualusers != nil {
+		edges = append(edges, host.EdgeVirtualusers)
+	}
+	if m.removedhackers != nil {
+		edges = append(edges, host.EdgeHackers)
+	}
 	return edges
 }
 
 // RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
 // the given name in this mutation.
 func (m *HostMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case host.EdgeVirtualusers:
+		ids := make([]ent.Value, 0, len(m.removedvirtualusers))
+		for id := range m.removedvirtualusers {
+			ids = append(ids, id)
+		}
+		return ids
+	case host.EdgeHackers:
+		ids := make([]ent.Value, 0, len(m.removedhackers))
+		for id := range m.removedhackers {
+			ids = append(ids, id)
+		}
+		return ids
+	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *HostMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 2)
+	if m.clearedvirtualusers {
+		edges = append(edges, host.EdgeVirtualusers)
+	}
+	if m.clearedhackers {
+		edges = append(edges, host.EdgeHackers)
+	}
 	return edges
 }
 
 // EdgeCleared returns a boolean which indicates if the edge with the given name
 // was cleared in this mutation.
 func (m *HostMutation) EdgeCleared(name string) bool {
+	switch name {
+	case host.EdgeVirtualusers:
+		return m.clearedvirtualusers
+	case host.EdgeHackers:
+		return m.clearedhackers
+	}
 	return false
 }
 
 // ClearEdge clears the value of the edge with the given name. It returns an error
 // if that edge is not defined in the schema.
 func (m *HostMutation) ClearEdge(name string) error {
+	switch name {
+	}
 	return fmt.Errorf("unknown Host unique edge %s", name)
 }
 
 // ResetEdge resets all changes to the edge with the given name in this mutation.
 // It returns an error if the edge is not defined in the schema.
 func (m *HostMutation) ResetEdge(name string) error {
+	switch name {
+	case host.EdgeVirtualusers:
+		m.ResetVirtualusers()
+		return nil
+	case host.EdgeHackers:
+		m.ResetHackers()
+		return nil
+	}
 	return fmt.Errorf("unknown Host edge %s", name)
 }
 
@@ -1409,4 +1590,965 @@ func (m *JokeMutation) ClearEdge(name string) error {
 // It returns an error if the edge is not defined in the schema.
 func (m *JokeMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown Joke edge %s", name)
+}
+
+// UserMutation represents an operation that mutates the User nodes in the graph.
+type UserMutation struct {
+	config
+	op                 Op
+	typ                string
+	id                 *int
+	user               *schema.Uname
+	password           *schema.PasswordHash
+	last_login         *time.Time
+	last_login_attempt *time.Time
+	clearedFields      map[string]struct{}
+	hosts              map[int]struct{}
+	removedhosts       map[int]struct{}
+	clearedhosts       bool
+	done               bool
+	oldValue           func(context.Context) (*User, error)
+	predicates         []predicate.User
+}
+
+var _ ent.Mutation = (*UserMutation)(nil)
+
+// userOption allows management of the mutation configuration using functional options.
+type userOption func(*UserMutation)
+
+// newUserMutation creates new mutation for the User entity.
+func newUserMutation(c config, op Op, opts ...userOption) *UserMutation {
+	m := &UserMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeUser,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withUserID sets the ID field of the mutation.
+func withUserID(id int) userOption {
+	return func(m *UserMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *User
+		)
+		m.oldValue = func(ctx context.Context) (*User, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().User.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withUser sets the old User of the mutation.
+func withUser(node *User) userOption {
+	return func(m *UserMutation) {
+		m.oldValue = func(context.Context) (*User, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m UserMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m UserMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *UserMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *UserMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().User.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetUser sets the "user" field.
+func (m *UserMutation) SetUser(s schema.Uname) {
+	m.user = &s
+}
+
+// User returns the value of the "user" field in the mutation.
+func (m *UserMutation) User() (r schema.Uname, exists bool) {
+	v := m.user
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUser returns the old "user" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldUser(ctx context.Context) (v schema.Uname, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUser is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUser requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUser: %w", err)
+	}
+	return oldValue.User, nil
+}
+
+// ResetUser resets all changes to the "user" field.
+func (m *UserMutation) ResetUser() {
+	m.user = nil
+}
+
+// SetPassword sets the "password" field.
+func (m *UserMutation) SetPassword(sh schema.PasswordHash) {
+	m.password = &sh
+}
+
+// Password returns the value of the "password" field in the mutation.
+func (m *UserMutation) Password() (r schema.PasswordHash, exists bool) {
+	v := m.password
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPassword returns the old "password" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldPassword(ctx context.Context) (v schema.PasswordHash, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPassword is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPassword requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPassword: %w", err)
+	}
+	return oldValue.Password, nil
+}
+
+// ResetPassword resets all changes to the "password" field.
+func (m *UserMutation) ResetPassword() {
+	m.password = nil
+}
+
+// SetLastLogin sets the "last_login" field.
+func (m *UserMutation) SetLastLogin(t time.Time) {
+	m.last_login = &t
+}
+
+// LastLogin returns the value of the "last_login" field in the mutation.
+func (m *UserMutation) LastLogin() (r time.Time, exists bool) {
+	v := m.last_login
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLastLogin returns the old "last_login" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldLastLogin(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLastLogin is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLastLogin requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLastLogin: %w", err)
+	}
+	return oldValue.LastLogin, nil
+}
+
+// ResetLastLogin resets all changes to the "last_login" field.
+func (m *UserMutation) ResetLastLogin() {
+	m.last_login = nil
+}
+
+// SetLastLoginAttempt sets the "last_login_attempt" field.
+func (m *UserMutation) SetLastLoginAttempt(t time.Time) {
+	m.last_login_attempt = &t
+}
+
+// LastLoginAttempt returns the value of the "last_login_attempt" field in the mutation.
+func (m *UserMutation) LastLoginAttempt() (r time.Time, exists bool) {
+	v := m.last_login_attempt
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLastLoginAttempt returns the old "last_login_attempt" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldLastLoginAttempt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLastLoginAttempt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLastLoginAttempt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLastLoginAttempt: %w", err)
+	}
+	return oldValue.LastLoginAttempt, nil
+}
+
+// ResetLastLoginAttempt resets all changes to the "last_login_attempt" field.
+func (m *UserMutation) ResetLastLoginAttempt() {
+	m.last_login_attempt = nil
+}
+
+// AddHostIDs adds the "hosts" edge to the Host entity by ids.
+func (m *UserMutation) AddHostIDs(ids ...int) {
+	if m.hosts == nil {
+		m.hosts = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.hosts[ids[i]] = struct{}{}
+	}
+}
+
+// ClearHosts clears the "hosts" edge to the Host entity.
+func (m *UserMutation) ClearHosts() {
+	m.clearedhosts = true
+}
+
+// HostsCleared reports if the "hosts" edge to the Host entity was cleared.
+func (m *UserMutation) HostsCleared() bool {
+	return m.clearedhosts
+}
+
+// RemoveHostIDs removes the "hosts" edge to the Host entity by IDs.
+func (m *UserMutation) RemoveHostIDs(ids ...int) {
+	if m.removedhosts == nil {
+		m.removedhosts = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.hosts, ids[i])
+		m.removedhosts[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedHosts returns the removed IDs of the "hosts" edge to the Host entity.
+func (m *UserMutation) RemovedHostsIDs() (ids []int) {
+	for id := range m.removedhosts {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// HostsIDs returns the "hosts" edge IDs in the mutation.
+func (m *UserMutation) HostsIDs() (ids []int) {
+	for id := range m.hosts {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetHosts resets all changes to the "hosts" edge.
+func (m *UserMutation) ResetHosts() {
+	m.hosts = nil
+	m.clearedhosts = false
+	m.removedhosts = nil
+}
+
+// Where appends a list predicates to the UserMutation builder.
+func (m *UserMutation) Where(ps ...predicate.User) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the UserMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *UserMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.User, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *UserMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *UserMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (User).
+func (m *UserMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *UserMutation) Fields() []string {
+	fields := make([]string, 0, 4)
+	if m.user != nil {
+		fields = append(fields, user.FieldUser)
+	}
+	if m.password != nil {
+		fields = append(fields, user.FieldPassword)
+	}
+	if m.last_login != nil {
+		fields = append(fields, user.FieldLastLogin)
+	}
+	if m.last_login_attempt != nil {
+		fields = append(fields, user.FieldLastLoginAttempt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *UserMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case user.FieldUser:
+		return m.User()
+	case user.FieldPassword:
+		return m.Password()
+	case user.FieldLastLogin:
+		return m.LastLogin()
+	case user.FieldLastLoginAttempt:
+		return m.LastLoginAttempt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *UserMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case user.FieldUser:
+		return m.OldUser(ctx)
+	case user.FieldPassword:
+		return m.OldPassword(ctx)
+	case user.FieldLastLogin:
+		return m.OldLastLogin(ctx)
+	case user.FieldLastLoginAttempt:
+		return m.OldLastLoginAttempt(ctx)
+	}
+	return nil, fmt.Errorf("unknown User field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *UserMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case user.FieldUser:
+		v, ok := value.(schema.Uname)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUser(v)
+		return nil
+	case user.FieldPassword:
+		v, ok := value.(schema.PasswordHash)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPassword(v)
+		return nil
+	case user.FieldLastLogin:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLastLogin(v)
+		return nil
+	case user.FieldLastLoginAttempt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLastLoginAttempt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown User field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *UserMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *UserMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *UserMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown User numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *UserMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *UserMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *UserMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown User nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *UserMutation) ResetField(name string) error {
+	switch name {
+	case user.FieldUser:
+		m.ResetUser()
+		return nil
+	case user.FieldPassword:
+		m.ResetPassword()
+		return nil
+	case user.FieldLastLogin:
+		m.ResetLastLogin()
+		return nil
+	case user.FieldLastLoginAttempt:
+		m.ResetLastLoginAttempt()
+		return nil
+	}
+	return fmt.Errorf("unknown User field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *UserMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.hosts != nil {
+		edges = append(edges, user.EdgeHosts)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *UserMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case user.EdgeHosts:
+		ids := make([]ent.Value, 0, len(m.hosts))
+		for id := range m.hosts {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *UserMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.removedhosts != nil {
+		edges = append(edges, user.EdgeHosts)
+	}
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *UserMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case user.EdgeHosts:
+		ids := make([]ent.Value, 0, len(m.removedhosts))
+		for id := range m.removedhosts {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *UserMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.clearedhosts {
+		edges = append(edges, user.EdgeHosts)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *UserMutation) EdgeCleared(name string) bool {
+	switch name {
+	case user.EdgeHosts:
+		return m.clearedhosts
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *UserMutation) ClearEdge(name string) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown User unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *UserMutation) ResetEdge(name string) error {
+	switch name {
+	case user.EdgeHosts:
+		m.ResetHosts()
+		return nil
+	}
+	return fmt.Errorf("unknown User edge %s", name)
+}
+
+// VirtualUserMutation represents an operation that mutates the VirtualUser nodes in the graph.
+type VirtualUserMutation struct {
+	config
+	op            Op
+	typ           string
+	id            *int
+	user          *schema.Uname
+	password      *schema.Password
+	clearedFields map[string]struct{}
+	done          bool
+	oldValue      func(context.Context) (*VirtualUser, error)
+	predicates    []predicate.VirtualUser
+}
+
+var _ ent.Mutation = (*VirtualUserMutation)(nil)
+
+// virtualuserOption allows management of the mutation configuration using functional options.
+type virtualuserOption func(*VirtualUserMutation)
+
+// newVirtualUserMutation creates new mutation for the VirtualUser entity.
+func newVirtualUserMutation(c config, op Op, opts ...virtualuserOption) *VirtualUserMutation {
+	m := &VirtualUserMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeVirtualUser,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withVirtualUserID sets the ID field of the mutation.
+func withVirtualUserID(id int) virtualuserOption {
+	return func(m *VirtualUserMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *VirtualUser
+		)
+		m.oldValue = func(ctx context.Context) (*VirtualUser, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().VirtualUser.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withVirtualUser sets the old VirtualUser of the mutation.
+func withVirtualUser(node *VirtualUser) virtualuserOption {
+	return func(m *VirtualUserMutation) {
+		m.oldValue = func(context.Context) (*VirtualUser, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m VirtualUserMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m VirtualUserMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *VirtualUserMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *VirtualUserMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().VirtualUser.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetUser sets the "user" field.
+func (m *VirtualUserMutation) SetUser(s schema.Uname) {
+	m.user = &s
+}
+
+// User returns the value of the "user" field in the mutation.
+func (m *VirtualUserMutation) User() (r schema.Uname, exists bool) {
+	v := m.user
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUser returns the old "user" field's value of the VirtualUser entity.
+// If the VirtualUser object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *VirtualUserMutation) OldUser(ctx context.Context) (v schema.Uname, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUser is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUser requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUser: %w", err)
+	}
+	return oldValue.User, nil
+}
+
+// ResetUser resets all changes to the "user" field.
+func (m *VirtualUserMutation) ResetUser() {
+	m.user = nil
+}
+
+// SetPassword sets the "password" field.
+func (m *VirtualUserMutation) SetPassword(s schema.Password) {
+	m.password = &s
+}
+
+// Password returns the value of the "password" field in the mutation.
+func (m *VirtualUserMutation) Password() (r schema.Password, exists bool) {
+	v := m.password
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPassword returns the old "password" field's value of the VirtualUser entity.
+// If the VirtualUser object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *VirtualUserMutation) OldPassword(ctx context.Context) (v schema.Password, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPassword is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPassword requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPassword: %w", err)
+	}
+	return oldValue.Password, nil
+}
+
+// ResetPassword resets all changes to the "password" field.
+func (m *VirtualUserMutation) ResetPassword() {
+	m.password = nil
+}
+
+// Where appends a list predicates to the VirtualUserMutation builder.
+func (m *VirtualUserMutation) Where(ps ...predicate.VirtualUser) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the VirtualUserMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *VirtualUserMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.VirtualUser, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *VirtualUserMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *VirtualUserMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (VirtualUser).
+func (m *VirtualUserMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *VirtualUserMutation) Fields() []string {
+	fields := make([]string, 0, 2)
+	if m.user != nil {
+		fields = append(fields, virtualuser.FieldUser)
+	}
+	if m.password != nil {
+		fields = append(fields, virtualuser.FieldPassword)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *VirtualUserMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case virtualuser.FieldUser:
+		return m.User()
+	case virtualuser.FieldPassword:
+		return m.Password()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *VirtualUserMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case virtualuser.FieldUser:
+		return m.OldUser(ctx)
+	case virtualuser.FieldPassword:
+		return m.OldPassword(ctx)
+	}
+	return nil, fmt.Errorf("unknown VirtualUser field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *VirtualUserMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case virtualuser.FieldUser:
+		v, ok := value.(schema.Uname)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUser(v)
+		return nil
+	case virtualuser.FieldPassword:
+		v, ok := value.(schema.Password)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPassword(v)
+		return nil
+	}
+	return fmt.Errorf("unknown VirtualUser field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *VirtualUserMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *VirtualUserMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *VirtualUserMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown VirtualUser numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *VirtualUserMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *VirtualUserMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *VirtualUserMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown VirtualUser nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *VirtualUserMutation) ResetField(name string) error {
+	switch name {
+	case virtualuser.FieldUser:
+		m.ResetUser()
+		return nil
+	case virtualuser.FieldPassword:
+		m.ResetPassword()
+		return nil
+	}
+	return fmt.Errorf("unknown VirtualUser field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *VirtualUserMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *VirtualUserMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *VirtualUserMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *VirtualUserMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *VirtualUserMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *VirtualUserMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *VirtualUserMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown VirtualUser unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *VirtualUserMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown VirtualUser edge %s", name)
 }

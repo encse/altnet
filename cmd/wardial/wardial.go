@@ -26,7 +26,7 @@ func main() {
 
 	areaCode, err := getAreaCode(os.Args)
 	io.FatalIfError(err)
-	
+
 	// find all numbers in given area:
 	phoneNumbers := network.FindPhoneNumbersWithPrefix(ctx, "+1 "+areaCode+"-")
 
@@ -104,7 +104,7 @@ func getAreaCode(args []string) (string, error) {
 	}
 
 	for {
-		res, err := io.ReadNotEmpty("enter area code (? for list): ")
+		res, err := io.ReadNotEmpty[string]("enter area code (? for list): ")
 		if err != nil {
 			return "", err
 		}

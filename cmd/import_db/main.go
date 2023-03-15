@@ -13,6 +13,7 @@ import (
 	"github.com/encse/altnet/ent/host"
 	"github.com/encse/altnet/ent/schema"
 	"github.com/encse/altnet/lib/io"
+	"github.com/encse/altnet/lib/milnet"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -66,11 +67,11 @@ func main() {
 }
 
 func importJokes(ctx context.Context, client *ent.Client) error {
+	fmt.Println("import jokes")
 	jokesBytes, err := ioutil.ReadFile("data/jokes.json")
 	io.FatalIfError(err)
 
 	type entry struct {
-		Id       int    `json:"id"`
 		Body     string `json:"body"`
 		Category string `json:"category"`
 	}
@@ -87,13 +88,12 @@ func importJokes(ctx context.Context, client *ent.Client) error {
 		}
 
 		_, err := client.Joke.Create().
-			SetID(entry.Id).
 			SetBody(entry.Body).
 			SetCategory(entry.Category).
 			Save(ctx)
 
 		if err != nil {
-			fmt.Println(entry.Id, err)
+			fmt.Println(entry.Body[:10], err)
 			continue
 		}
 	}
@@ -101,6 +101,7 @@ func importJokes(ctx context.Context, client *ent.Client) error {
 }
 
 func importBbs(ctx context.Context, client *ent.Client) error {
+	fmt.Println("import bbs hosts")
 	bbsBytes, err := ioutil.ReadFile("data/bbs.json")
 	io.FatalIfError(err)
 
@@ -154,13 +155,12 @@ func importBbs(ctx context.Context, client *ent.Client) error {
 			continue
 		}
 
-		fmt.Print(systemName + "                     \r")
 	}
 	return nil
 }
 
 func importUumap(ctx context.Context, client *ent.Client) error {
-
+	fmt.Println("import umap")
 	uumapBytes, err := ioutil.ReadFile("data/uumap.json")
 	if err != nil {
 		return err
@@ -173,7 +173,7 @@ func importUumap(ctx context.Context, client *ent.Client) error {
 	}
 
 	for _, v := range repr {
-		h, err := client.Host.Create().
+		_, err := client.Host.Create().
 			SetName(v.Name).
 			SetType(host.TypeUucp).
 			SetEntry(v.Entry).
@@ -191,12 +191,12 @@ func importUumap(ctx context.Context, client *ent.Client) error {
 			fmt.Println(v.Name, err)
 			continue
 		}
-		fmt.Print(h.Name + "                     \r")
 	}
 	return nil
 }
 
 func importCsokavar(ctx context.Context, client *ent.Client) error {
+	fmt.Println("import csokavar")
 	_, err := client.Host.Create().
 		SetType(host.TypeUucp).
 		SetName(schema.HostName("csokavar")).
@@ -215,6 +215,7 @@ func importCsokavar(ctx context.Context, client *ent.Client) error {
 }
 
 func importMilHosts(ctx context.Context, client *ent.Client) error {
+	fmt.Println("import mil hosts")
 	input, err := ioutil.ReadFile("data/mil.json")
 	if err != nil {
 		return err
@@ -243,18 +244,25 @@ func importMilHosts(ctx context.Context, client *ent.Client) error {
 		phone, err := schema.ParsePhoneNumber(st)
 		io.FatalIfError(err)
 
-		h, err := client.Host.Create().
+		u := client.VirtualUser.Create().
+			SetUser(milnet.GenerateUserId()).
+			SetPassword(milnet.GenerateAccessCode()).
+			SaveX(ctx)
+
+		_, err = client.Host.Create().
 			SetName(schema.HostName(v.SystemName)).
 			SetType(host.TypeMil).
 			SetOrganization(v.Organization).
 			SetPhone([]schema.PhoneNumber{phone}).
 			SetLocation(v.Location).
+			AddVirtualusers(u).
 			Save(ctx)
+
 		if err != nil {
 			fmt.Println(v.SystemName, err)
 			continue
 		}
-		fmt.Print(h.Name + "                     \r")
+
 	}
 	return nil
 }

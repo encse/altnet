@@ -11,6 +11,8 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/encse/altnet/ent/host"
 	"github.com/encse/altnet/ent/schema"
+	"github.com/encse/altnet/ent/user"
+	"github.com/encse/altnet/ent/virtualuser"
 )
 
 // HostCreate is the builder for creating a Host entity.
@@ -154,6 +156,36 @@ func (hc *HostCreate) SetPhone(sn []schema.PhoneNumber) *HostCreate {
 func (hc *HostCreate) SetNeighbours(sn []schema.HostName) *HostCreate {
 	hc.mutation.SetNeighbours(sn)
 	return hc
+}
+
+// AddVirtualuserIDs adds the "virtualusers" edge to the VirtualUser entity by IDs.
+func (hc *HostCreate) AddVirtualuserIDs(ids ...int) *HostCreate {
+	hc.mutation.AddVirtualuserIDs(ids...)
+	return hc
+}
+
+// AddVirtualusers adds the "virtualusers" edges to the VirtualUser entity.
+func (hc *HostCreate) AddVirtualusers(v ...*VirtualUser) *HostCreate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return hc.AddVirtualuserIDs(ids...)
+}
+
+// AddHackerIDs adds the "hackers" edge to the User entity by IDs.
+func (hc *HostCreate) AddHackerIDs(ids ...int) *HostCreate {
+	hc.mutation.AddHackerIDs(ids...)
+	return hc
+}
+
+// AddHackers adds the "hackers" edges to the User entity.
+func (hc *HostCreate) AddHackers(u ...*User) *HostCreate {
+	ids := make([]int, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
+	}
+	return hc.AddHackerIDs(ids...)
 }
 
 // Mutation returns the HostMutation object of the builder.
@@ -335,6 +367,44 @@ func (hc *HostCreate) createSpec() (*Host, *sqlgraph.CreateSpec) {
 	if value, ok := hc.mutation.Neighbours(); ok {
 		_spec.SetField(host.FieldNeighbours, field.TypeJSON, value)
 		_node.Neighbours = value
+	}
+	if nodes := hc.mutation.VirtualusersIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   host.VirtualusersTable,
+			Columns: []string{host.VirtualusersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: virtualuser.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := hc.mutation.HackersIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   host.HackersTable,
+			Columns: host.HackersPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: user.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }

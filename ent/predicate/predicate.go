@@ -11,3 +11,9 @@ type Host func(*sql.Selector)
 
 // Joke is the predicate function for joke builders.
 type Joke func(*sql.Selector)
+
+// User is the predicate function for user builders.
+type User func(*sql.Selector)
+
+// VirtualUser is the predicate function for virtualuser builders.
+type VirtualUser func(*sql.Selector)

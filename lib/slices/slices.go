@@ -13,6 +13,15 @@ func Contains[E comparable](s []E, v E) bool {
 	return lib.Contains(s, v)
 }
 
+func Any[E comparable](es []E, pred func(e E) bool) bool {
+	for _, e := range es {
+		if pred(e) {
+			return true
+		}
+	}
+	return false
+}
+
 // Clone returns a copy of the slice.
 // The elements are copied using assignment, so this is a shallow clone.
 func Clone[S ~[]E, E any](s S) S {

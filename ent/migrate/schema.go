@@ -42,12 +42,78 @@ var (
 		Columns:    JokesColumns,
 		PrimaryKey: []*schema.Column{JokesColumns[0]},
 	}
+	// UsersColumns holds the columns for the "users" table.
+	UsersColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "user", Type: field.TypeString},
+		{Name: "password", Type: field.TypeString},
+		{Name: "last_login", Type: field.TypeTime},
+		{Name: "last_login_attempt", Type: field.TypeTime},
+	}
+	// UsersTable holds the schema information for the "users" table.
+	UsersTable = &schema.Table{
+		Name:       "users",
+		Columns:    UsersColumns,
+		PrimaryKey: []*schema.Column{UsersColumns[0]},
+	}
+	// VirtualUsersColumns holds the columns for the "virtual_users" table.
+	VirtualUsersColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "user", Type: field.TypeString},
+		{Name: "password", Type: field.TypeString},
+		{Name: "host_virtualusers", Type: field.TypeInt, Nullable: true},
+	}
+	// VirtualUsersTable holds the schema information for the "virtual_users" table.
+	VirtualUsersTable = &schema.Table{
+		Name:       "virtual_users",
+		Columns:    VirtualUsersColumns,
+		PrimaryKey: []*schema.Column{VirtualUsersColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "virtual_users_hosts_virtualusers",
+				Columns:    []*schema.Column{VirtualUsersColumns[3]},
+				RefColumns: []*schema.Column{HostsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+	}
+	// HostHackersColumns holds the columns for the "host_hackers" table.
+	HostHackersColumns = []*schema.Column{
+		{Name: "host_id", Type: field.TypeInt},
+		{Name: "user_id", Type: field.TypeInt},
+	}
+	// HostHackersTable holds the schema information for the "host_hackers" table.
+	HostHackersTable = &schema.Table{
+		Name:       "host_hackers",
+		Columns:    HostHackersColumns,
+		PrimaryKey: []*schema.Column{HostHackersColumns[0], HostHackersColumns[1]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "host_hackers_host_id",
+				Columns:    []*schema.Column{HostHackersColumns[0]},
+				RefColumns: []*schema.Column{HostsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "host_hackers_user_id",
+				Columns:    []*schema.Column{HostHackersColumns[1]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		HostsTable,
 		JokesTable,
+		UsersTable,
+		VirtualUsersTable,
+		HostHackersTable,
 	}
 )
 
 func init() {
+	VirtualUsersTable.ForeignKeys[0].RefTable = HostsTable
+	HostHackersTable.ForeignKeys[0].RefTable = HostsTable
+	HostHackersTable.ForeignKeys[1].RefTable = UsersTable
 }

@@ -23,17 +23,17 @@ func Login(ctx context.Context, h *ent.Host) {
 		fmt.Println()
 		fmt.Println("Enter your username or GUEST")
 
-		username, err := io.ReadNotEmpty("Login: ")
+		username, err := io.ReadNotEmpty[schema.Uname]("Login: ")
 		io.FatalIfError(err)
 
-		username = strings.ToLower(username)
+		username = username.ToLower()
 		if username != "guest" {
 			for i := 0; i < 3; i++ {
 				_, err = io.ReadPassword("Password: ")
 				io.FatalIfError(err)
 			}
 		} else {
-			ctx = SetUser(ctx, User(username))
+			ctx = SetUser(ctx, schema.Uname(username))
 			log.Infof("Connected as %s", username)
 			fmt.Println("Welcome", username)
 			RunHiddenCommand(ctx, "./shell")

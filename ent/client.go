@@ -12,9 +12,12 @@ import (
 
 	"github.com/encse/altnet/ent/host"
 	"github.com/encse/altnet/ent/joke"
+	"github.com/encse/altnet/ent/user"
+	"github.com/encse/altnet/ent/virtualuser"
 
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 )
 
 // Client is the client that holds all ent builders.
@@ -26,6 +29,10 @@ type Client struct {
 	Host *HostClient
 	// Joke is the client for interacting with the Joke builders.
 	Joke *JokeClient
+	// User is the client for interacting with the User builders.
+	User *UserClient
+	// VirtualUser is the client for interacting with the VirtualUser builders.
+	VirtualUser *VirtualUserClient
 }
 
 // NewClient creates a new client configured with the given options.
@@ -41,6 +48,8 @@ func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
 	c.Host = NewHostClient(c.config)
 	c.Joke = NewJokeClient(c.config)
+	c.User = NewUserClient(c.config)
+	c.VirtualUser = NewVirtualUserClient(c.config)
 }
 
 // Open opens a database/sql.DB specified by the driver name and
@@ -72,10 +81,12 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:    ctx,
-		config: cfg,
-		Host:   NewHostClient(cfg),
-		Joke:   NewJokeClient(cfg),
+		ctx:         ctx,
+		config:      cfg,
+		Host:        NewHostClient(cfg),
+		Joke:        NewJokeClient(cfg),
+		User:        NewUserClient(cfg),
+		VirtualUser: NewVirtualUserClient(cfg),
 	}, nil
 }
 
@@ -93,10 +104,12 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:    ctx,
-		config: cfg,
-		Host:   NewHostClient(cfg),
-		Joke:   NewJokeClient(cfg),
+		ctx:         ctx,
+		config:      cfg,
+		Host:        NewHostClient(cfg),
+		Joke:        NewJokeClient(cfg),
+		User:        NewUserClient(cfg),
+		VirtualUser: NewVirtualUserClient(cfg),
 	}, nil
 }
 
@@ -127,6 +140,8 @@ func (c *Client) Close() error {
 func (c *Client) Use(hooks ...Hook) {
 	c.Host.Use(hooks...)
 	c.Joke.Use(hooks...)
+	c.User.Use(hooks...)
+	c.VirtualUser.Use(hooks...)
 }
 
 // Intercept adds the query interceptors to all the entity clients.
@@ -134,6 +149,8 @@ func (c *Client) Use(hooks ...Hook) {
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	c.Host.Intercept(interceptors...)
 	c.Joke.Intercept(interceptors...)
+	c.User.Intercept(interceptors...)
+	c.VirtualUser.Intercept(interceptors...)
 }
 
 // Mutate implements the ent.Mutator interface.
@@ -143,6 +160,10 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Host.mutate(ctx, m)
 	case *JokeMutation:
 		return c.Joke.mutate(ctx, m)
+	case *UserMutation:
+		return c.User.mutate(ctx, m)
+	case *VirtualUserMutation:
+		return c.VirtualUser.mutate(ctx, m)
 	default:
 		return nil, fmt.Errorf("ent: unknown mutation type %T", m)
 	}
@@ -239,6 +260,38 @@ func (c *HostClient) GetX(ctx context.Context, id int) *Host {
 		panic(err)
 	}
 	return obj
+}
+
+// QueryVirtualusers queries the virtualusers edge of a Host.
+func (c *HostClient) QueryVirtualusers(h *Host) *VirtualUserQuery {
+	query := (&VirtualUserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := h.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(host.Table, host.FieldID, id),
+			sqlgraph.To(virtualuser.Table, virtualuser.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, host.VirtualusersTable, host.VirtualusersColumn),
+		)
+		fromV = sqlgraph.Neighbors(h.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryHackers queries the hackers edge of a Host.
+func (c *HostClient) QueryHackers(h *Host) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := h.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(host.Table, host.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, host.HackersTable, host.HackersPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(h.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
 }
 
 // Hooks returns the client hooks.
@@ -381,5 +434,257 @@ func (c *JokeClient) mutate(ctx context.Context, m *JokeMutation) (Value, error)
 		return (&JokeDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown Joke mutation op: %q", m.Op())
+	}
+}
+
+// UserClient is a client for the User schema.
+type UserClient struct {
+	config
+}
+
+// NewUserClient returns a client for the User from the given config.
+func NewUserClient(c config) *UserClient {
+	return &UserClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `user.Hooks(f(g(h())))`.
+func (c *UserClient) Use(hooks ...Hook) {
+	c.hooks.User = append(c.hooks.User, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `user.Intercept(f(g(h())))`.
+func (c *UserClient) Intercept(interceptors ...Interceptor) {
+	c.inters.User = append(c.inters.User, interceptors...)
+}
+
+// Create returns a builder for creating a User entity.
+func (c *UserClient) Create() *UserCreate {
+	mutation := newUserMutation(c.config, OpCreate)
+	return &UserCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of User entities.
+func (c *UserClient) CreateBulk(builders ...*UserCreate) *UserCreateBulk {
+	return &UserCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for User.
+func (c *UserClient) Update() *UserUpdate {
+	mutation := newUserMutation(c.config, OpUpdate)
+	return &UserUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *UserClient) UpdateOne(u *User) *UserUpdateOne {
+	mutation := newUserMutation(c.config, OpUpdateOne, withUser(u))
+	return &UserUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *UserClient) UpdateOneID(id int) *UserUpdateOne {
+	mutation := newUserMutation(c.config, OpUpdateOne, withUserID(id))
+	return &UserUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for User.
+func (c *UserClient) Delete() *UserDelete {
+	mutation := newUserMutation(c.config, OpDelete)
+	return &UserDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *UserClient) DeleteOne(u *User) *UserDeleteOne {
+	return c.DeleteOneID(u.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *UserClient) DeleteOneID(id int) *UserDeleteOne {
+	builder := c.Delete().Where(user.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &UserDeleteOne{builder}
+}
+
+// Query returns a query builder for User.
+func (c *UserClient) Query() *UserQuery {
+	return &UserQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeUser},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a User entity by its id.
+func (c *UserClient) Get(ctx context.Context, id int) (*User, error) {
+	return c.Query().Where(user.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *UserClient) GetX(ctx context.Context, id int) *User {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryHosts queries the hosts edge of a User.
+func (c *UserClient) QueryHosts(u *User) *HostQuery {
+	query := (&HostClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := u.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(host.Table, host.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, user.HostsTable, user.HostsPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(u.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *UserClient) Hooks() []Hook {
+	return c.hooks.User
+}
+
+// Interceptors returns the client interceptors.
+func (c *UserClient) Interceptors() []Interceptor {
+	return c.inters.User
+}
+
+func (c *UserClient) mutate(ctx context.Context, m *UserMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&UserCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&UserUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&UserUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&UserDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown User mutation op: %q", m.Op())
+	}
+}
+
+// VirtualUserClient is a client for the VirtualUser schema.
+type VirtualUserClient struct {
+	config
+}
+
+// NewVirtualUserClient returns a client for the VirtualUser from the given config.
+func NewVirtualUserClient(c config) *VirtualUserClient {
+	return &VirtualUserClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `virtualuser.Hooks(f(g(h())))`.
+func (c *VirtualUserClient) Use(hooks ...Hook) {
+	c.hooks.VirtualUser = append(c.hooks.VirtualUser, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `virtualuser.Intercept(f(g(h())))`.
+func (c *VirtualUserClient) Intercept(interceptors ...Interceptor) {
+	c.inters.VirtualUser = append(c.inters.VirtualUser, interceptors...)
+}
+
+// Create returns a builder for creating a VirtualUser entity.
+func (c *VirtualUserClient) Create() *VirtualUserCreate {
+	mutation := newVirtualUserMutation(c.config, OpCreate)
+	return &VirtualUserCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of VirtualUser entities.
+func (c *VirtualUserClient) CreateBulk(builders ...*VirtualUserCreate) *VirtualUserCreateBulk {
+	return &VirtualUserCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for VirtualUser.
+func (c *VirtualUserClient) Update() *VirtualUserUpdate {
+	mutation := newVirtualUserMutation(c.config, OpUpdate)
+	return &VirtualUserUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *VirtualUserClient) UpdateOne(vu *VirtualUser) *VirtualUserUpdateOne {
+	mutation := newVirtualUserMutation(c.config, OpUpdateOne, withVirtualUser(vu))
+	return &VirtualUserUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *VirtualUserClient) UpdateOneID(id int) *VirtualUserUpdateOne {
+	mutation := newVirtualUserMutation(c.config, OpUpdateOne, withVirtualUserID(id))
+	return &VirtualUserUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for VirtualUser.
+func (c *VirtualUserClient) Delete() *VirtualUserDelete {
+	mutation := newVirtualUserMutation(c.config, OpDelete)
+	return &VirtualUserDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *VirtualUserClient) DeleteOne(vu *VirtualUser) *VirtualUserDeleteOne {
+	return c.DeleteOneID(vu.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *VirtualUserClient) DeleteOneID(id int) *VirtualUserDeleteOne {
+	builder := c.Delete().Where(virtualuser.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &VirtualUserDeleteOne{builder}
+}
+
+// Query returns a query builder for VirtualUser.
+func (c *VirtualUserClient) Query() *VirtualUserQuery {
+	return &VirtualUserQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeVirtualUser},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a VirtualUser entity by its id.
+func (c *VirtualUserClient) Get(ctx context.Context, id int) (*VirtualUser, error) {
+	return c.Query().Where(virtualuser.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *VirtualUserClient) GetX(ctx context.Context, id int) *VirtualUser {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *VirtualUserClient) Hooks() []Hook {
+	return c.hooks.VirtualUser
+}
+
+// Interceptors returns the client interceptors.
+func (c *VirtualUserClient) Interceptors() []Interceptor {
+	return c.inters.VirtualUser
+}
+
+func (c *VirtualUserClient) mutate(ctx context.Context, m *VirtualUserMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&VirtualUserCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&VirtualUserUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&VirtualUserUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&VirtualUserDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown VirtualUser mutation op: %q", m.Op())
 	}
 }

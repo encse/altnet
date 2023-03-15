@@ -6,11 +6,14 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/encse/altnet/ent/schema"
 	"github.com/encse/altnet/lib/altnet"
 	"github.com/encse/altnet/lib/config"
 	"github.com/encse/altnet/lib/csokavar"
 	"github.com/encse/altnet/lib/io"
 	"github.com/encse/altnet/lib/log"
+	"github.com/encse/altnet/lib/uman"
+	"github.com/encse/altnet/lib/uumap"
 	"golang.org/x/term"
 )
 
@@ -18,31 +21,34 @@ func main() {
 	ctx := altnet.ContextFromEnv(context.Background())
 	conf := config.Get()
 
+	network, err := uumap.NetworkConn()
+	io.FatalIfError(err)
+	defer network.Close()
+
 	screenWidth, _, err := term.GetSize(int(syscall.Stdin))
 	io.FatalIfError(err)
 
 	fmt.Println(csokavar.Banner(screenWidth))
-	fmt.Println("Enter your username or GUEST")
 
-	username, err := io.ReadNotEmpty("Username: ")
+	loginres, err := login(ctx, network)
 	io.FatalIfError(err)
-
-	username = strings.ToLower(username)
-	if username != "guest" {
-		for i := 0; i < 3; i++ {
-			_, err = io.ReadPassword("Password: ")
-			io.FatalIfError(err)
-		}
+	if loginres == nil {
 		return
 	}
-	ctx = altnet.SetUser(ctx, altnet.User(username))
 
-	log.Infof("Connected as %s", username)
-	logo, err := csokavar.Logo(screenWidth)
-	io.FatalIfError(err)
+	ctx = altnet.SetRealUser(ctx, loginres.User)
+	log.Infof("Connected as %s", loginres.User)
 
-	fmt.Println(logo)
-	fmt.Println("Welcome", username)
+	ctx = altnet.SetUser(ctx, loginres.User)
+	fmt.Println()
+	fmt.Println("Welcome", loginres.User)
+	if loginres.LastLoginFailure != nil {
+		fmt.Println("Last login failure", *loginres.LastLoginFailure)
+	}
+
+	if loginres.LastLogin != nil {
+		fmt.Println("Last login", *loginres.LastLogin)
+	}
 
 loop:
 	for {
@@ -96,4 +102,29 @@ loop:
 		return
 	}
 	fmt.Println(footer)
+}
+
+func login(ctx context.Context, network uumap.Network) (*uman.LoginRes, error) {
+	fmt.Println("Enter your username or GUEST. If you don't have a user yet, enter NEWUSER.")
+
+	username, err := io.ReadNotEmpty[schema.Uname]("Username: ")
+	io.FatalIfError(err)
+
+	username = schema.Uname(strings.ToLower(string(username)))
+	if username == "guest" {
+		return &uman.LoginRes{User: username}, nil
+	} else if username == "newuser" {
+		return uman.RegisterUser(ctx, network)
+	} else {
+		for i := 0; i < 3; i++ {
+			password, err := io.ReadPassword("Password: ")
+			io.FatalIfError(err)
+
+			loginres, err := uman.LoginAttempt(ctx, network, username, password)
+			if loginres != nil || err != nil {
+				return loginres, err
+			}
+		}
+	}
+	return nil, nil
 }

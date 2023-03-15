@@ -16,6 +16,10 @@ type Tx struct {
 	Host *HostClient
 	// Joke is the client for interacting with the Joke builders.
 	Joke *JokeClient
+	// User is the client for interacting with the User builders.
+	User *UserClient
+	// VirtualUser is the client for interacting with the VirtualUser builders.
+	VirtualUser *VirtualUserClient
 
 	// lazily loaded.
 	client     *Client
@@ -149,6 +153,8 @@ func (tx *Tx) Client() *Client {
 func (tx *Tx) init() {
 	tx.Host = NewHostClient(tx.config)
 	tx.Joke = NewJokeClient(tx.config)
+	tx.User = NewUserClient(tx.config)
+	tx.VirtualUser = NewVirtualUserClient(tx.config)
 }
 
 // txDriver wraps the given dialect.Tx with a nop dialect.Driver implementation.

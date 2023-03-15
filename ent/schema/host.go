@@ -2,6 +2,7 @@ package schema
 
 import (
 	"entgo.io/ent"
+	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 )
 
@@ -30,5 +31,8 @@ func (Host) Fields() []ent.Field {
 }
 
 func (Host) Edges() []ent.Edge {
-	return nil
+	return []ent.Edge{
+		edge.To("virtualusers", VirtualUser.Type),
+		edge.To("hackers", User.Type),
+	}
 }

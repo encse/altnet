@@ -20,7 +20,7 @@ type SessionId int32
 type ProcInfo struct {
 	Pid     Pid
 	Exe     Exe
-	User    User
+	User    schema.Uname
 	Started time.Time
 }
 
@@ -99,7 +99,7 @@ func GetProcesses(host schema.HostName) ([]ProcInfo, error) {
 
 		if schema.HostName(procHost) == host && procUser != "" && procExe != "" {
 			res = append(res, ProcInfo{
-				User:    User(procUser),
+				User:    schema.Uname(procUser),
 				Exe:     Exe(procExe),
 				Pid:     Pid(process.Pid),
 				Started: time.Unix(createTime/1000, createTime%1000),

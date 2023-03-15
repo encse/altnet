@@ -12,12 +12,13 @@
             "cwd": "${workspaceFolder}",
             "program": "${fileDirname}",
             "args": [
-                "sztaki"
+                "8085561315"
             ],
             "debugAdapter": "dlv-dap",
             "env": {
                 "ALTNET_HOST": "csokavar",
-                "ALTNET_USER": "guest"
+                "ALTNET_USER": "guest",
+                "ALTNET_REAL_USER": "encse"
             }
         }
     ]

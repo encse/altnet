@@ -35,8 +35,24 @@ const (
 	FieldPhone = "phone"
 	// FieldNeighbours holds the string denoting the neighbours field in the database.
 	FieldNeighbours = "neighbours"
+	// EdgeVirtualusers holds the string denoting the virtualusers edge name in mutations.
+	EdgeVirtualusers = "virtualusers"
+	// EdgeHackers holds the string denoting the hackers edge name in mutations.
+	EdgeHackers = "hackers"
 	// Table holds the table name of the host in the database.
 	Table = "hosts"
+	// VirtualusersTable is the table that holds the virtualusers relation/edge.
+	VirtualusersTable = "virtual_users"
+	// VirtualusersInverseTable is the table name for the VirtualUser entity.
+	// It exists in this package in order to avoid circular dependency with the "virtualuser" package.
+	VirtualusersInverseTable = "virtual_users"
+	// VirtualusersColumn is the table column denoting the virtualusers relation/edge.
+	VirtualusersColumn = "host_virtualusers"
+	// HackersTable is the table that holds the hackers relation/edge. The primary key declared below.
+	HackersTable = "host_hackers"
+	// HackersInverseTable is the table name for the User entity.
+	// It exists in this package in order to avoid circular dependency with the "user" package.
+	HackersInverseTable = "users"
 )
 
 // Columns holds all SQL columns for host fields.
@@ -55,6 +71,12 @@ var Columns = []string{
 	FieldPhone,
 	FieldNeighbours,
 }
+
+var (
+	// HackersPrimaryKey and HackersColumn2 are the table columns denoting the
+	// primary key for the hackers relation (M2M).
+	HackersPrimaryKey = []string{"host_id", "user_id"}
+)
 
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {

@@ -41,6 +41,38 @@ type Host struct {
 	Phone []schema.PhoneNumber `json:"phone,omitempty"`
 	// Neighbours holds the value of the "neighbours" field.
 	Neighbours []schema.HostName `json:"neighbours,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the HostQuery when eager-loading is set.
+	Edges HostEdges `json:"edges"`
+}
+
+// HostEdges holds the relations/edges for other nodes in the graph.
+type HostEdges struct {
+	// Virtualusers holds the value of the virtualusers edge.
+	Virtualusers []*VirtualUser `json:"virtualusers,omitempty"`
+	// Hackers holds the value of the hackers edge.
+	Hackers []*User `json:"hackers,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [2]bool
+}
+
+// VirtualusersOrErr returns the Virtualusers value or an error if the edge
+// was not loaded in eager-loading.
+func (e HostEdges) VirtualusersOrErr() ([]*VirtualUser, error) {
+	if e.loadedTypes[0] {
+		return e.Virtualusers, nil
+	}
+	return nil, &NotLoadedError{edge: "virtualusers"}
+}
+
+// HackersOrErr returns the Hackers value or an error if the edge
+// was not loaded in eager-loading.
+func (e HostEdges) HackersOrErr() ([]*User, error) {
+	if e.loadedTypes[1] {
+		return e.Hackers, nil
+	}
+	return nil, &NotLoadedError{edge: "hackers"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -154,6 +186,16 @@ func (h *Host) assignValues(columns []string, values []any) error {
 		}
 	}
 	return nil
+}
+
+// QueryVirtualusers queries the "virtualusers" edge of the Host entity.
+func (h *Host) QueryVirtualusers() *VirtualUserQuery {
+	return NewHostClient(h.config).QueryVirtualusers(h)
+}
+
+// QueryHackers queries the "hackers" edge of the Host entity.
+func (h *Host) QueryHackers() *UserQuery {
+	return NewHostClient(h.config).QueryHackers(h)
 }
 
 // Update returns a builder for updating this Host.

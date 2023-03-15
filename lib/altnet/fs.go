@@ -117,7 +117,7 @@ func More(ctx context.Context, fi FileInfo) error {
 	return nil
 }
 
-func getAltnetUserDir(host schema.HostName, user User) string {
+func getAltnetUserDir(host schema.HostName, user schema.Uname) string {
 	return path.Join(altnetRoot, string(host), "usr", string(user))
 }
 func getAltnetSeedDir(host schema.HostName) string {

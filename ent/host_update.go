@@ -14,6 +14,8 @@ import (
 	"github.com/encse/altnet/ent/host"
 	"github.com/encse/altnet/ent/predicate"
 	"github.com/encse/altnet/ent/schema"
+	"github.com/encse/altnet/ent/user"
+	"github.com/encse/altnet/ent/virtualuser"
 )
 
 // HostUpdate is the builder for updating Host entities.
@@ -183,9 +185,81 @@ func (hu *HostUpdate) ClearNeighbours() *HostUpdate {
 	return hu
 }
 
+// AddVirtualuserIDs adds the "virtualusers" edge to the VirtualUser entity by IDs.
+func (hu *HostUpdate) AddVirtualuserIDs(ids ...int) *HostUpdate {
+	hu.mutation.AddVirtualuserIDs(ids...)
+	return hu
+}
+
+// AddVirtualusers adds the "virtualusers" edges to the VirtualUser entity.
+func (hu *HostUpdate) AddVirtualusers(v ...*VirtualUser) *HostUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return hu.AddVirtualuserIDs(ids...)
+}
+
+// AddHackerIDs adds the "hackers" edge to the User entity by IDs.
+func (hu *HostUpdate) AddHackerIDs(ids ...int) *HostUpdate {
+	hu.mutation.AddHackerIDs(ids...)
+	return hu
+}
+
+// AddHackers adds the "hackers" edges to the User entity.
+func (hu *HostUpdate) AddHackers(u ...*User) *HostUpdate {
+	ids := make([]int, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
+	}
+	return hu.AddHackerIDs(ids...)
+}
+
 // Mutation returns the HostMutation object of the builder.
 func (hu *HostUpdate) Mutation() *HostMutation {
 	return hu.mutation
+}
+
+// ClearVirtualusers clears all "virtualusers" edges to the VirtualUser entity.
+func (hu *HostUpdate) ClearVirtualusers() *HostUpdate {
+	hu.mutation.ClearVirtualusers()
+	return hu
+}
+
+// RemoveVirtualuserIDs removes the "virtualusers" edge to VirtualUser entities by IDs.
+func (hu *HostUpdate) RemoveVirtualuserIDs(ids ...int) *HostUpdate {
+	hu.mutation.RemoveVirtualuserIDs(ids...)
+	return hu
+}
+
+// RemoveVirtualusers removes "virtualusers" edges to VirtualUser entities.
+func (hu *HostUpdate) RemoveVirtualusers(v ...*VirtualUser) *HostUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return hu.RemoveVirtualuserIDs(ids...)
+}
+
+// ClearHackers clears all "hackers" edges to the User entity.
+func (hu *HostUpdate) ClearHackers() *HostUpdate {
+	hu.mutation.ClearHackers()
+	return hu
+}
+
+// RemoveHackerIDs removes the "hackers" edge to User entities by IDs.
+func (hu *HostUpdate) RemoveHackerIDs(ids ...int) *HostUpdate {
+	hu.mutation.RemoveHackerIDs(ids...)
+	return hu
+}
+
+// RemoveHackers removes "hackers" edges to User entities.
+func (hu *HostUpdate) RemoveHackers(u ...*User) *HostUpdate {
+	ids := make([]int, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
+	}
+	return hu.RemoveHackerIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -285,6 +359,114 @@ func (hu *HostUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if hu.mutation.NeighboursCleared() {
 		_spec.ClearField(host.FieldNeighbours, field.TypeJSON)
+	}
+	if hu.mutation.VirtualusersCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   host.VirtualusersTable,
+			Columns: []string{host.VirtualusersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: virtualuser.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := hu.mutation.RemovedVirtualusersIDs(); len(nodes) > 0 && !hu.mutation.VirtualusersCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   host.VirtualusersTable,
+			Columns: []string{host.VirtualusersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: virtualuser.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := hu.mutation.VirtualusersIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   host.VirtualusersTable,
+			Columns: []string{host.VirtualusersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: virtualuser.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if hu.mutation.HackersCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   host.HackersTable,
+			Columns: host.HackersPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: user.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := hu.mutation.RemovedHackersIDs(); len(nodes) > 0 && !hu.mutation.HackersCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   host.HackersTable,
+			Columns: host.HackersPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: user.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := hu.mutation.HackersIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   host.HackersTable,
+			Columns: host.HackersPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: user.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if n, err = sqlgraph.UpdateNodes(ctx, hu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -460,9 +642,81 @@ func (huo *HostUpdateOne) ClearNeighbours() *HostUpdateOne {
 	return huo
 }
 
+// AddVirtualuserIDs adds the "virtualusers" edge to the VirtualUser entity by IDs.
+func (huo *HostUpdateOne) AddVirtualuserIDs(ids ...int) *HostUpdateOne {
+	huo.mutation.AddVirtualuserIDs(ids...)
+	return huo
+}
+
+// AddVirtualusers adds the "virtualusers" edges to the VirtualUser entity.
+func (huo *HostUpdateOne) AddVirtualusers(v ...*VirtualUser) *HostUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return huo.AddVirtualuserIDs(ids...)
+}
+
+// AddHackerIDs adds the "hackers" edge to the User entity by IDs.
+func (huo *HostUpdateOne) AddHackerIDs(ids ...int) *HostUpdateOne {
+	huo.mutation.AddHackerIDs(ids...)
+	return huo
+}
+
+// AddHackers adds the "hackers" edges to the User entity.
+func (huo *HostUpdateOne) AddHackers(u ...*User) *HostUpdateOne {
+	ids := make([]int, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
+	}
+	return huo.AddHackerIDs(ids...)
+}
+
 // Mutation returns the HostMutation object of the builder.
 func (huo *HostUpdateOne) Mutation() *HostMutation {
 	return huo.mutation
+}
+
+// ClearVirtualusers clears all "virtualusers" edges to the VirtualUser entity.
+func (huo *HostUpdateOne) ClearVirtualusers() *HostUpdateOne {
+	huo.mutation.ClearVirtualusers()
+	return huo
+}
+
+// RemoveVirtualuserIDs removes the "virtualusers" edge to VirtualUser entities by IDs.
+func (huo *HostUpdateOne) RemoveVirtualuserIDs(ids ...int) *HostUpdateOne {
+	huo.mutation.RemoveVirtualuserIDs(ids...)
+	return huo
+}
+
+// RemoveVirtualusers removes "virtualusers" edges to VirtualUser entities.
+func (huo *HostUpdateOne) RemoveVirtualusers(v ...*VirtualUser) *HostUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return huo.RemoveVirtualuserIDs(ids...)
+}
+
+// ClearHackers clears all "hackers" edges to the User entity.
+func (huo *HostUpdateOne) ClearHackers() *HostUpdateOne {
+	huo.mutation.ClearHackers()
+	return huo
+}
+
+// RemoveHackerIDs removes the "hackers" edge to User entities by IDs.
+func (huo *HostUpdateOne) RemoveHackerIDs(ids ...int) *HostUpdateOne {
+	huo.mutation.RemoveHackerIDs(ids...)
+	return huo
+}
+
+// RemoveHackers removes "hackers" edges to User entities.
+func (huo *HostUpdateOne) RemoveHackers(u ...*User) *HostUpdateOne {
+	ids := make([]int, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
+	}
+	return huo.RemoveHackerIDs(ids...)
 }
 
 // Where appends a list predicates to the HostUpdate builder.
@@ -592,6 +846,114 @@ func (huo *HostUpdateOne) sqlSave(ctx context.Context) (_node *Host, err error) 
 	}
 	if huo.mutation.NeighboursCleared() {
 		_spec.ClearField(host.FieldNeighbours, field.TypeJSON)
+	}
+	if huo.mutation.VirtualusersCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   host.VirtualusersTable,
+			Columns: []string{host.VirtualusersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: virtualuser.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := huo.mutation.RemovedVirtualusersIDs(); len(nodes) > 0 && !huo.mutation.VirtualusersCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   host.VirtualusersTable,
+			Columns: []string{host.VirtualusersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: virtualuser.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := huo.mutation.VirtualusersIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   host.VirtualusersTable,
+			Columns: []string{host.VirtualusersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: virtualuser.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if huo.mutation.HackersCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   host.HackersTable,
+			Columns: host.HackersPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: user.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := huo.mutation.RemovedHackersIDs(); len(nodes) > 0 && !huo.mutation.HackersCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   host.HackersTable,
+			Columns: host.HackersPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: user.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := huo.mutation.HackersIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   host.HackersTable,
+			Columns: host.HackersPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: user.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &Host{config: huo.config}
 	_spec.Assign = _node.assignValues

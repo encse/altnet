@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/encse/altnet/ent"
+	"github.com/encse/altnet/ent/schema"
 	"github.com/encse/altnet/lib/altnet"
 	"github.com/encse/altnet/lib/io"
 	"github.com/encse/altnet/lib/slices"
@@ -57,10 +58,10 @@ func main() {
 	fmt.Println()
 
 	fmt.Println("Enter your username or GUEST")
-	username, err := io.ReadNotEmpty("Username: ")
+	username, err := io.ReadNotEmpty[schema.Uname]("Username: ")
 	io.FatalIfError(err)
 
-	username = strings.ToLower(username)
+	username = username.ToLower()
 	if username != "guest" {
 		for i := 0; i < 3; i++ {
 			_, err = io.ReadPassword("Password: ")
@@ -69,7 +70,7 @@ func main() {
 		return
 	}
 
-	ctx = altnet.SetUser(ctx, altnet.User(username))
+	ctx = altnet.SetUser(ctx, username)
 
 loop:
 	for {

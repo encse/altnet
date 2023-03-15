@@ -4,6 +4,7 @@ package ent
 
 import (
 	"context"
+	"database/sql/driver"
 	"fmt"
 	"math"
 
@@ -12,15 +13,19 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/encse/altnet/ent/host"
 	"github.com/encse/altnet/ent/predicate"
+	"github.com/encse/altnet/ent/user"
+	"github.com/encse/altnet/ent/virtualuser"
 )
 
 // HostQuery is the builder for querying Host entities.
 type HostQuery struct {
 	config
-	ctx        *QueryContext
-	order      []OrderFunc
-	inters     []Interceptor
-	predicates []predicate.Host
+	ctx              *QueryContext
+	order            []OrderFunc
+	inters           []Interceptor
+	predicates       []predicate.Host
+	withVirtualusers *VirtualUserQuery
+	withHackers      *UserQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -55,6 +60,50 @@ func (hq *HostQuery) Unique(unique bool) *HostQuery {
 func (hq *HostQuery) Order(o ...OrderFunc) *HostQuery {
 	hq.order = append(hq.order, o...)
 	return hq
+}
+
+// QueryVirtualusers chains the current query on the "virtualusers" edge.
+func (hq *HostQuery) QueryVirtualusers() *VirtualUserQuery {
+	query := (&VirtualUserClient{config: hq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := hq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := hq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(host.Table, host.FieldID, selector),
+			sqlgraph.To(virtualuser.Table, virtualuser.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, host.VirtualusersTable, host.VirtualusersColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(hq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryHackers chains the current query on the "hackers" edge.
+func (hq *HostQuery) QueryHackers() *UserQuery {
+	query := (&UserClient{config: hq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := hq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := hq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(host.Table, host.FieldID, selector),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, host.HackersTable, host.HackersPrimaryKey...),
+		)
+		fromU = sqlgraph.SetNeighbors(hq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
 }
 
 // First returns the first Host entity from the query.
@@ -244,15 +293,39 @@ func (hq *HostQuery) Clone() *HostQuery {
 		return nil
 	}
 	return &HostQuery{
-		config:     hq.config,
-		ctx:        hq.ctx.Clone(),
-		order:      append([]OrderFunc{}, hq.order...),
-		inters:     append([]Interceptor{}, hq.inters...),
-		predicates: append([]predicate.Host{}, hq.predicates...),
+		config:           hq.config,
+		ctx:              hq.ctx.Clone(),
+		order:            append([]OrderFunc{}, hq.order...),
+		inters:           append([]Interceptor{}, hq.inters...),
+		predicates:       append([]predicate.Host{}, hq.predicates...),
+		withVirtualusers: hq.withVirtualusers.Clone(),
+		withHackers:      hq.withHackers.Clone(),
 		// clone intermediate query.
 		sql:  hq.sql.Clone(),
 		path: hq.path,
 	}
+}
+
+// WithVirtualusers tells the query-builder to eager-load the nodes that are connected to
+// the "virtualusers" edge. The optional arguments are used to configure the query builder of the edge.
+func (hq *HostQuery) WithVirtualusers(opts ...func(*VirtualUserQuery)) *HostQuery {
+	query := (&VirtualUserClient{config: hq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	hq.withVirtualusers = query
+	return hq
+}
+
+// WithHackers tells the query-builder to eager-load the nodes that are connected to
+// the "hackers" edge. The optional arguments are used to configure the query builder of the edge.
+func (hq *HostQuery) WithHackers(opts ...func(*UserQuery)) *HostQuery {
+	query := (&UserClient{config: hq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	hq.withHackers = query
+	return hq
 }
 
 // GroupBy is used to group vertices by one or more fields/columns.
@@ -331,8 +404,12 @@ func (hq *HostQuery) prepareQuery(ctx context.Context) error {
 
 func (hq *HostQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Host, error) {
 	var (
-		nodes = []*Host{}
-		_spec = hq.querySpec()
+		nodes       = []*Host{}
+		_spec       = hq.querySpec()
+		loadedTypes = [2]bool{
+			hq.withVirtualusers != nil,
+			hq.withHackers != nil,
+		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*Host).scanValues(nil, columns)
@@ -340,6 +417,7 @@ func (hq *HostQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Host, e
 	_spec.Assign = func(columns []string, values []any) error {
 		node := &Host{config: hq.config}
 		nodes = append(nodes, node)
+		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
 	for i := range hooks {
@@ -351,7 +429,114 @@ func (hq *HostQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Host, e
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
+	if query := hq.withVirtualusers; query != nil {
+		if err := hq.loadVirtualusers(ctx, query, nodes,
+			func(n *Host) { n.Edges.Virtualusers = []*VirtualUser{} },
+			func(n *Host, e *VirtualUser) { n.Edges.Virtualusers = append(n.Edges.Virtualusers, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := hq.withHackers; query != nil {
+		if err := hq.loadHackers(ctx, query, nodes,
+			func(n *Host) { n.Edges.Hackers = []*User{} },
+			func(n *Host, e *User) { n.Edges.Hackers = append(n.Edges.Hackers, e) }); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
+}
+
+func (hq *HostQuery) loadVirtualusers(ctx context.Context, query *VirtualUserQuery, nodes []*Host, init func(*Host), assign func(*Host, *VirtualUser)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*Host)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	query.withFKs = true
+	query.Where(predicate.VirtualUser(func(s *sql.Selector) {
+		s.Where(sql.InValues(host.VirtualusersColumn, fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.host_virtualusers
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "host_virtualusers" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "host_virtualusers" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (hq *HostQuery) loadHackers(ctx context.Context, query *UserQuery, nodes []*Host, init func(*Host), assign func(*Host, *User)) error {
+	edgeIDs := make([]driver.Value, len(nodes))
+	byID := make(map[int]*Host)
+	nids := make(map[int]map[*Host]struct{})
+	for i, node := range nodes {
+		edgeIDs[i] = node.ID
+		byID[node.ID] = node
+		if init != nil {
+			init(node)
+		}
+	}
+	query.Where(func(s *sql.Selector) {
+		joinT := sql.Table(host.HackersTable)
+		s.Join(joinT).On(s.C(user.FieldID), joinT.C(host.HackersPrimaryKey[1]))
+		s.Where(sql.InValues(joinT.C(host.HackersPrimaryKey[0]), edgeIDs...))
+		columns := s.SelectedColumns()
+		s.Select(joinT.C(host.HackersPrimaryKey[0]))
+		s.AppendSelect(columns...)
+		s.SetDistinct(false)
+	})
+	if err := query.prepareQuery(ctx); err != nil {
+		return err
+	}
+	qr := QuerierFunc(func(ctx context.Context, q Query) (Value, error) {
+		return query.sqlAll(ctx, func(_ context.Context, spec *sqlgraph.QuerySpec) {
+			assign := spec.Assign
+			values := spec.ScanValues
+			spec.ScanValues = func(columns []string) ([]any, error) {
+				values, err := values(columns[1:])
+				if err != nil {
+					return nil, err
+				}
+				return append([]any{new(sql.NullInt64)}, values...), nil
+			}
+			spec.Assign = func(columns []string, values []any) error {
+				outValue := int(values[0].(*sql.NullInt64).Int64)
+				inValue := int(values[1].(*sql.NullInt64).Int64)
+				if nids[inValue] == nil {
+					nids[inValue] = map[*Host]struct{}{byID[outValue]: {}}
+					return assign(columns[1:], values[1:])
+				}
+				nids[inValue][byID[outValue]] = struct{}{}
+				return nil
+			}
+		})
+	})
+	neighbors, err := withInterceptors[[]*User](ctx, query, qr, query.inters)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected "hackers" node returned %v`, n.ID)
+		}
+		for kn := range nodes {
+			assign(kn, n)
+		}
+	}
+	return nil
 }
 
 func (hq *HostQuery) sqlCount(ctx context.Context) (int, error) {

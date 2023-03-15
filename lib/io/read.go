@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/encse/altnet/ent/schema"
 	"github.com/encse/altnet/lib/log"
 	"github.com/encse/altnet/lib/slices"
 	"golang.org/x/term"
@@ -49,7 +50,7 @@ func ReadArg(prompt string, args []string, iarg int) (string, error) {
 
 	if arg == "" {
 		var err error
-		arg, err = ReadNotEmpty(prompt + ":")
+		arg, err = ReadNotEmpty[string](prompt + ":")
 		if err != nil {
 			return "", err
 		}
@@ -69,11 +70,10 @@ func ReadArgFromList[T ~string](prompt string, args []string, iarg int, options 
 
 	for {
 		var err error
-		st, err := ReadNotEmpty(prompt + " (? for list): ")
+		arg, err := ReadNotEmpty[T](prompt + " (? for list): ")
 		if err != nil {
 			return "", err
 		}
-		arg = T(st)
 		if slices.Contains(options, arg) {
 			return arg, err
 		}
@@ -86,7 +86,7 @@ func ReadArgFromList[T ~string](prompt string, args []string, iarg int, options 
 	}
 }
 
-func ReadNotEmpty(prompt string) (string, error) {
+func ReadNotEmpty[T ~string](prompt string) (T, error) {
 	for {
 		res, err := Readline(prompt)
 		if err != nil {
@@ -94,7 +94,7 @@ func ReadNotEmpty(prompt string) (string, error) {
 		}
 		res = strings.TrimSpace(res)
 		if res != "" {
-			return res, nil
+			return T(res), nil
 		}
 	}
 }
@@ -109,14 +109,14 @@ func Readline(prompt string) (string, error) {
 	return strings.TrimRight(st, "\n"), nil
 }
 
-func ReadPassword(prompt string) (string, error) {
+func ReadPassword(prompt string) (schema.Password, error) {
 	fmt.Print(prompt)
 	res, err := term.ReadPassword(int(os.Stdin.Fd()))
 	if err != nil {
 		return "", err
 	}
 	fmt.Println()
-	return string(res), nil
+	return schema.Password(res), nil
 }
 
 func ReadKey() (string, error) {

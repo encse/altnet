@@ -27,6 +27,7 @@ var commands = [][]string{
 	{"uuplot <host>", "plot uupath to a host"},
 	{"wardial <area code>", "automated phone number scanner"},
 	{"zrun <game>", "play Z-machine games"},
+	{"tacnuke <tel>", "TAC CRC vulnerability exploit"},
 }
 
 func main() {
