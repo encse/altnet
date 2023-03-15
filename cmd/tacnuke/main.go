@@ -21,6 +21,7 @@ import (
 
 func main() {
 
+	fmt.Println("")
 	fmt.Println("         .-^^---....,,--        ")
 	fmt.Println("     _--                  --_   ")
 	fmt.Println("    <       T.A.C NUKE       >  ")
@@ -223,7 +224,7 @@ func generateGarbage() []byte {
 	size := 16 * (30 + rand.Intn(10))
 	var bytes = make([]byte, size)
 	for i := 0; i < size; i++ {
-		bytes[i] = byte(rand.Intn(127))
+		bytes[i] = byte(rand.Intn(256))
 	}
 
 	return bytes
