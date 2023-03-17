@@ -20,6 +20,7 @@ var commands = [][]string{
 	{"ls <glob>", "list files"},
 	{"netstat", "show connected hosts"},
 	{"ps ", "show running processes on this host"},
+	{"stats", "show user stats"},
 	{"skyline <user>", "show the GitHub contributions chart for a GitHub user"},
 	{"telnet <host>", "connect to a host in netstat"},
 	{"twitter <user>", "show the latest tweets of a Twitter user"},
