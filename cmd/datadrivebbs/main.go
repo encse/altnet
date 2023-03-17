@@ -62,11 +62,16 @@ func main() {
 	io.FatalIfError(err)
 
 	username = username.ToLower()
-	if username != "guest" {
-		for i := 0; i < 3; i++ {
-			_, err = io.ReadPassword("Password: ")
-			io.FatalIfError(err)
-		}
+	valid := username == "guest"
+	for i := 0; i < 3 && !valid; i++ {
+		password, err := io.ReadPassword("Password: ")
+		valid, err = altnet.ValidatePassword(
+			ctx, network, host, username, password,
+		)
+		io.FatalIfError(err)
+	}
+
+	if !valid {
 		return
 	}
 

@@ -3,45 +3,54 @@ package altnet
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/encse/altnet/ent"
 	"github.com/encse/altnet/ent/host"
 	"github.com/encse/altnet/ent/schema"
+	"github.com/encse/altnet/ent/user"
 	"github.com/encse/altnet/lib/io"
-	"github.com/encse/altnet/lib/log"
+	"github.com/encse/altnet/lib/slices"
+	"github.com/encse/altnet/lib/uman"
 	"github.com/encse/altnet/lib/uumap"
 )
 
-func Login(ctx context.Context, h *ent.Host) {
-
-	ctx = SetHost(ctx, h.Name)
-
-	if h.Type == host.TypeUucp {
-		fmt.Printf("Connected to %s\n", strings.ToUpper(string(h.Name)))
-		fmt.Println()
-		fmt.Println("Enter your username or GUEST")
-
-		username, err := io.ReadNotEmpty[schema.Uname]("Login: ")
+func ValidatePassword(
+	ctx context.Context,
+	network uumap.Network,
+	h *ent.Host,
+	userid schema.Uname,
+	password schema.Password,
+) (bool, error) {
+	realUser, err := GetRealUser(ctx)
+	io.FatalIfError(err)
+	if userid == realUser {
+		c, err := h.QueryHackers().Where(user.UserEQ(realUser)).Count(ctx)
+		io.FatalIfError(err)
+		if c > 0 {
+			return uman.ValidatePassword(ctx, network, realUser, schema.Password(password))
+		} else {
+			return false, nil
+		}
+	} else {
+		users, err := h.QueryVirtualusers().All(ctx)
 		io.FatalIfError(err)
 
-		username = username.ToLower()
-		if username != "guest" {
-			for i := 0; i < 3; i++ {
-				_, err = io.ReadPassword("Password: ")
-				io.FatalIfError(err)
-			}
-		} else {
-			ctx = SetUser(ctx, schema.Uname(username))
-			log.Infof("Connected as %s", username)
-			fmt.Println("Welcome", username)
-			RunHiddenCommand(ctx, "./shell")
-		}
+		valid := slices.Any(users, func(user *ent.VirtualUser) bool {
+			return user.User == userid && user.Password == password
+		})
+		return valid, nil
+	}
+}
+
+func Login(ctx context.Context, h *ent.Host) {
+	ctx = SetHost(ctx, h.Name)
+	if h.Type == host.TypeUucp {
+		RunHiddenCommand(ctx, "./uucplogin")
 	} else if h.Type == host.TypeBbs {
 		RunHiddenCommand(ctx, "./datadrivebbs")
-	} else {
-		RunHiddenCommand(ctx, "./milnet")
+	} else if h.Type == host.TypeMil {
+		RunHiddenCommand(ctx, "./milnetlogin")
 	}
 }
 

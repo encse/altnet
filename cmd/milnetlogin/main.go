@@ -7,14 +7,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/encse/altnet/ent"
 	"github.com/encse/altnet/ent/schema"
-	"github.com/encse/altnet/ent/user"
 	"github.com/encse/altnet/lib/altnet"
 	"github.com/encse/altnet/lib/io"
 	"github.com/encse/altnet/lib/milnet"
-	"github.com/encse/altnet/lib/slices"
-	"github.com/encse/altnet/lib/uman"
 	"github.com/encse/altnet/lib/uumap"
 )
 
@@ -24,9 +20,6 @@ func main() {
 	hostName, err := altnet.GetHost(ctx)
 	io.FatalIfError(err)
 
-	realUser, err := altnet.GetRealUser(ctx)
-	io.FatalIfError(err)
-	fmt.Println(realUser)
 	network, err := uumap.NetworkConn()
 	io.FatalIfError(err)
 	defer network.Close()
@@ -55,27 +48,13 @@ func main() {
 
 	userid, password, err := readLoginCredentials(ctx)
 	io.FatalIfError(err)
+
 	fmt.Println()
 	fmt.Print("Contacting authentication service...")
-
 	time.Sleep(1 * time.Second)
-	valid := false
 
-	if userid == realUser {
-		c, err := host.QueryHackers().Where(user.UserEQ(realUser)).Count(ctx)
-		io.FatalIfError(err)
-		if c > 0 {
-			valid, err = uman.ValidatePassword(ctx, network, realUser, schema.Password(password))
-			io.FatalIfError(err)
-		}
-	} else {
-		users, err := host.QueryVirtualusers().All(ctx)
-		io.FatalIfError(err)
-
-		valid = slices.Any(users, func(user *ent.VirtualUser) bool {
-			return user.User == userid && user.Password == password
-		})
-	}
+	valid, err := altnet.ValidatePassword(ctx, network, host, userid, password)
+	io.FatalIfError(err)
 
 	if valid {
 		fmt.Println("ok")
