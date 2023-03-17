@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/encse/altnet/ent/user"
 	"github.com/encse/altnet/lib/altnet"
@@ -33,14 +34,21 @@ func main() {
 	if hosts != nil {
 		fmt.Println("logins:")
 		rows := make([][]string, 0, len(hosts)+2)
-		rows = append(rows, []string{"host", "organization", "location"})
-		rows = append(rows, []string{"----", "------------", "--------"})
+		rows = append(rows, []string{"host", "phone", "organization"})
+		rows = append(rows, []string{"----", "-----", "------------"})
 
 		for _, host := range hosts {
+			phone := ""
+			if len(host.Phone) > 0 {
+				phone = string(host.Phone[0])
+			}
+
+			org := strings.Split(host.Organization, "\n")[0]
+
 			rows = append(rows, []string{
 				string(host.Name),
-				io.Linebreak(string(host.Organization), 32),
-				io.Linebreak(string(host.Location), 32),
+				phone,
+				io.Substring(org, 32),
 			})
 		}
 		fmt.Println(io.Table(rows...))
