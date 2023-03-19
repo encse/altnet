@@ -18,6 +18,7 @@ RUN go mod download
 COPY cmd ./cmd
 COPY lib ./lib
 COPY ent ./ent
+COPY schema ./schema
 RUN go install -ldflags="-s -w" ./cmd/...
 
 FROM golang:latest AS base
