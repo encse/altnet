@@ -76,7 +76,7 @@ func main() {
 
 func importJokes(ctx context.Context, client *ent.Client) error {
 	fmt.Println("import jokes")
-	jokesBytes, err := ioutil.ReadFile("data/jokes.json")
+	jokesBytes, err := ioutil.ReadFile("seed/jokes.json")
 	io.FatalIfError(err)
 
 	type entry struct {
@@ -110,7 +110,7 @@ func importJokes(ctx context.Context, client *ent.Client) error {
 
 func importBbs(ctx context.Context, client *ent.Client) error {
 	fmt.Println("import bbs hosts")
-	bbsBytes, err := ioutil.ReadFile("data/bbs.json")
+	bbsBytes, err := ioutil.ReadFile("seed/bbs.json")
 	io.FatalIfError(err)
 
 	type entry struct {
@@ -169,7 +169,7 @@ func importBbs(ctx context.Context, client *ent.Client) error {
 
 func importServices(ctx context.Context, client *ent.Client) error {
 	fmt.Println("import services")
-	uumapBytes, err := ioutil.ReadFile("data/services.json")
+	uumapBytes, err := ioutil.ReadFile("seed/services.json")
 	if err != nil {
 		return err
 	}
@@ -197,7 +197,7 @@ func importServices(ctx context.Context, client *ent.Client) error {
 
 func importUumap(ctx context.Context, client *ent.Client) error {
 	fmt.Println("import umap")
-	uumapBytes, err := ioutil.ReadFile("data/uumap.json")
+	uumapBytes, err := ioutil.ReadFile("seed/uumap.json")
 	if err != nil {
 		return err
 	}
@@ -287,7 +287,7 @@ func importCsokavar(ctx context.Context, client *ent.Client) error {
 
 func importMilHosts(ctx context.Context, client *ent.Client) error {
 	fmt.Println("import mil hosts")
-	input, err := ioutil.ReadFile("data/mil.json")
+	input, err := ioutil.ReadFile("seed/mil.json")
 	if err != nil {
 		return err
 	}

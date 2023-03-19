@@ -1,0 +1,3 @@
+[submodule "altnet-seed"]
+	path = seed
+	url = git@github.com:encse/altnet-seed.git
