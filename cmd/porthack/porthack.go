@@ -18,6 +18,9 @@ import (
 
 func main() {
 
+	fmt.Println("._   _  ._ _|_ |_   _.  _ |  ")
+	fmt.Println("|_) (_) |   |_ | | (_| (_ |< ")
+	fmt.Println("|                            ")
 	fmt.Println("Starting Porthack 0.9 at", time.Now().Format(time.RFC1123))
 	fmt.Println("")
 
@@ -108,7 +111,7 @@ func exploit(
 	}
 
 	for {
-		rsp, err := io.Readline("Port to try:")
+		rsp, err := io.Readline("Port to try: ")
 		if err != nil {
 			return err
 		}

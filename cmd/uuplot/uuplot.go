@@ -8,6 +8,8 @@ import (
 	"strings"
 
 	mapset "github.com/deckarep/golang-set/v2"
+	"github.com/encse/altnet/ent/host"
+	"github.com/encse/altnet/ent/user"
 	"github.com/encse/altnet/lib/altnet"
 	"github.com/encse/altnet/lib/io"
 	"github.com/encse/altnet/lib/log"
@@ -17,27 +19,31 @@ import (
 
 func main() {
 	ctx := altnet.ContextFromEnv(context.Background())
+
+	realUser, err := altnet.GetRealUser(ctx)
+	io.FatalIfError(err)
+
 	currentHost, err := altnet.GetHost(ctx)
 	io.FatalIfError(err)
 
 	st, err := io.ReadArg("host", os.Args, 1)
 	io.FatalIfError(err)
 
-	targetHost := schema.HostName(strings.ToLower(st))
+	targetHostName := schema.HostName(strings.ToLower(st))
 
 	network, err := uumap.NetworkConn()
 	io.FatalIfError(err)
 	defer network.Close()
 
-	host, err := network.Lookup(ctx, targetHost)
+	targetHost, err := network.Lookup(ctx, targetHostName)
 	io.FatalIfError(err)
-	if host == nil {
-		fmt.Println("unknown host", targetHost)
+	if targetHost == nil {
+		fmt.Println("unknown host", targetHostName)
 		return
 	}
 
 	log.Info("finding paths")
-	res := uumap.FindPaths(ctx, network, currentHost, targetHost, 3)
+	res := uumap.FindPaths(ctx, network, currentHost, targetHostName, 3)
 
 	if len(res) == 0 {
 		fmt.Println("no path to host")
@@ -46,7 +52,16 @@ func main() {
 	fmt.Println("collecting edges")
 	sb := strings.Builder{}
 
-	for edge := range getEdges(res, currentHost, targetHost).Iter() {
+	hacked := make([]schema.HostName, 0)
+
+	err = network.Client.User.Query().
+		Where(user.UserEQ(realUser)).
+		QueryHosts().
+		Select(host.FieldName).
+		Scan(ctx, &hacked)
+	io.FatalIfError(err)
+
+	for edge := range getEdges(res, currentHost, targetHostName, mapset.NewSet(hacked...)).Iter() {
 		sb.WriteString(edge)
 	}
 
@@ -61,7 +76,12 @@ func main() {
 	}
 }
 
-func getEdges(paths [][]schema.HostName, startHost schema.HostName, targetHost schema.HostName) mapset.Set[string] {
+func getEdges(
+	paths [][]schema.HostName,
+	startHost schema.HostName,
+	targetHost schema.HostName,
+	hacked mapset.Set[schema.HostName],
+) mapset.Set[string] {
 	res := mapset.NewSet[string]()
 	for _, path := range paths {
 		for j := 1; j < len(path); j++ {
@@ -74,8 +94,16 @@ func getEdges(paths [][]schema.HostName, startHost schema.HostName, targetHost s
 			if path[j] == targetHost || path[j] == startHost {
 				style2 = "{ border: 1px dotted black; }"
 			}
+			from := string(path[j-1])
+			if hacked.Contains(path[j-1]) {
+				from += "*"
+			}
+			to := string(path[j])
 
-			edge := fmt.Sprintf("[ %s ] %s -> [ %s ] %s\n", path[j-1], style1, path[j], style2)
+			if hacked.Contains(path[j]) {
+				to += "*"
+			}
+			edge := fmt.Sprintf("[ %s ] %s -> [ %s ] %s\n", from, style1, to, style2)
 			if !res.Contains(edge) {
 				res.Add(edge)
 			}

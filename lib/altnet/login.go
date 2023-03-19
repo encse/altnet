@@ -7,7 +7,6 @@ import (
 
 	"github.com/encse/altnet/ent"
 	"github.com/encse/altnet/ent/host"
-	"github.com/encse/altnet/ent/user"
 	"github.com/encse/altnet/lib/io"
 	"github.com/encse/altnet/lib/slices"
 	"github.com/encse/altnet/lib/uman"
@@ -25,9 +24,9 @@ func ValidatePassword(
 	realUser, err := GetRealUser(ctx)
 	io.FatalIfError(err)
 	if userid == realUser {
-		c, err := h.QueryHackers().Where(user.UserEQ(realUser)).Count(ctx)
+		hacked, err := h.IsHacked(ctx, realUser)
 		io.FatalIfError(err)
-		if c > 0 {
+		if hacked {
 			return uman.ValidatePassword(ctx, network, realUser, schema.Password(password))
 		} else {
 			return false, nil

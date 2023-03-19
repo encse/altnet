@@ -4,9 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"math/rand"
+	"os"
 	"strings"
 
 	"entgo.io/ent/dialect/sql"
@@ -76,7 +76,7 @@ func main() {
 
 func importJokes(ctx context.Context, client *ent.Client) error {
 	fmt.Println("import jokes")
-	jokesBytes, err := ioutil.ReadFile("seed/jokes.json")
+	jokesBytes, err := os.ReadFile("seed/jokes.json")
 	io.FatalIfError(err)
 
 	type entry struct {
@@ -110,7 +110,7 @@ func importJokes(ctx context.Context, client *ent.Client) error {
 
 func importBbs(ctx context.Context, client *ent.Client) error {
 	fmt.Println("import bbs hosts")
-	bbsBytes, err := ioutil.ReadFile("seed/bbs.json")
+	bbsBytes, err := os.ReadFile("seed/bbs.json")
 	io.FatalIfError(err)
 
 	type entry struct {
@@ -169,7 +169,7 @@ func importBbs(ctx context.Context, client *ent.Client) error {
 
 func importServices(ctx context.Context, client *ent.Client) error {
 	fmt.Println("import services")
-	uumapBytes, err := ioutil.ReadFile("seed/services.json")
+	uumapBytes, err := os.ReadFile("seed/services.json")
 	if err != nil {
 		return err
 	}
@@ -197,7 +197,7 @@ func importServices(ctx context.Context, client *ent.Client) error {
 
 func importUumap(ctx context.Context, client *ent.Client) error {
 	fmt.Println("import umap")
-	uumapBytes, err := ioutil.ReadFile("seed/uumap.json")
+	uumapBytes, err := os.ReadFile("seed/uumap.json")
 	if err != nil {
 		return err
 	}
@@ -237,13 +237,12 @@ func importUumap(ctx context.Context, client *ent.Client) error {
 
 func addRandomServices(ctx context.Context, client *ent.Client, host *ent.Host) error {
 	services := make([]*ent.TcpService, 0)
-	services = append(services, client.TcpService.Query().Where(tcpservice.PortEQ(20)).OnlyX(ctx))
 	services = append(services, client.TcpService.Query().Where(tcpservice.PortEQ(21)).OnlyX(ctx))
 	services = append(services, client.TcpService.Query().Where(tcpservice.PortEQ(23)).OnlyX(ctx))
 	services = append(services, client.TcpService.Query().Where(tcpservice.PortEQ(79)).OnlyX(ctx))
 	services = append(services, client.TcpService.Query().Where(tcpservice.PortEQ(513)).OnlyX(ctx))
 
-	c := 1 + rand.Intn(2)
+	c := 2 + rand.Intn(2)
 
 	for i := 0; i < c; i++ {
 		service := client.TcpService.Query().
@@ -287,7 +286,7 @@ func importCsokavar(ctx context.Context, client *ent.Client) error {
 
 func importMilHosts(ctx context.Context, client *ent.Client) error {
 	fmt.Println("import mil hosts")
-	input, err := ioutil.ReadFile("seed/mil.json")
+	input, err := os.ReadFile("seed/mil.json")
 	if err != nil {
 		return err
 	}

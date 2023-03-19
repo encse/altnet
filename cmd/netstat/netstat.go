@@ -20,6 +20,9 @@ func main() {
 	io.FatalIfError(err)
 	defer network.Close()
 
+	realUser, err := altnet.GetRealUser(ctx)
+	io.FatalIfError(err)
+
 	uuentry, err := network.Lookup(ctx, host)
 	io.FatalIfError(err)
 
@@ -32,12 +35,18 @@ func main() {
 	slices.Sort(neighbours)
 
 	rows := make([][]string, 0, len(neighbours)+2)
-	rows = append(rows, []string{"host", "organization", "location"})
-	rows = append(rows, []string{"----", "------------", "--------"})
+	rows = append(rows, []string{"", "host", "organization", "location"})
+	rows = append(rows, []string{"", "----", "------------", "--------"})
 
 	for _, key := range neighbours {
 		host, _ := network.Lookup(ctx, schema.HostName(key))
+		hacked := ""
+		if ok, _ := host.IsHacked(ctx, realUser); ok {
+			hacked = "*"
+		}
+
 		rows = append(rows, []string{
+			hacked,
 			string(host.Name),
 			io.Substring(string(host.Organization), 32),
 			io.Substring(string(host.Location), 32),

@@ -18,20 +18,11 @@ type Network struct {
 
 func (n Network) Lookup(ctx context.Context, hostName schema.HostName) (*ent.Host, error) {
 
-	hosts, err := n.Client.Host.
+	host, err := n.Client.Host.
 		Query().
 		Where(host.Name(hostName)).
-		All(ctx)
-
-	if err != nil {
-		return nil, err
-	}
-
-	if len(hosts) == 0 {
-		return nil, nil
-	}
-
-	return hosts[0], nil
+		First(ctx)
+	return host, err
 }
 
 func (n Network) Close() error {
