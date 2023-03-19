@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/encse/altnet/ent/host"
 	"github.com/encse/altnet/ent/predicate"
+	"github.com/encse/altnet/ent/tcpservice"
 	"github.com/encse/altnet/ent/user"
 	"github.com/encse/altnet/ent/virtualuser"
 )
@@ -24,6 +25,7 @@ type HostQuery struct {
 	order            []OrderFunc
 	inters           []Interceptor
 	predicates       []predicate.Host
+	withServices     *TcpServiceQuery
 	withVirtualusers *VirtualUserQuery
 	withHackers      *UserQuery
 	// intermediate query (i.e. traversal path).
@@ -60,6 +62,28 @@ func (hq *HostQuery) Unique(unique bool) *HostQuery {
 func (hq *HostQuery) Order(o ...OrderFunc) *HostQuery {
 	hq.order = append(hq.order, o...)
 	return hq
+}
+
+// QueryServices chains the current query on the "services" edge.
+func (hq *HostQuery) QueryServices() *TcpServiceQuery {
+	query := (&TcpServiceClient{config: hq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := hq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := hq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(host.Table, host.FieldID, selector),
+			sqlgraph.To(tcpservice.Table, tcpservice.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, host.ServicesTable, host.ServicesPrimaryKey...),
+		)
+		fromU = sqlgraph.SetNeighbors(hq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
 }
 
 // QueryVirtualusers chains the current query on the "virtualusers" edge.
@@ -298,12 +322,24 @@ func (hq *HostQuery) Clone() *HostQuery {
 		order:            append([]OrderFunc{}, hq.order...),
 		inters:           append([]Interceptor{}, hq.inters...),
 		predicates:       append([]predicate.Host{}, hq.predicates...),
+		withServices:     hq.withServices.Clone(),
 		withVirtualusers: hq.withVirtualusers.Clone(),
 		withHackers:      hq.withHackers.Clone(),
 		// clone intermediate query.
 		sql:  hq.sql.Clone(),
 		path: hq.path,
 	}
+}
+
+// WithServices tells the query-builder to eager-load the nodes that are connected to
+// the "services" edge. The optional arguments are used to configure the query builder of the edge.
+func (hq *HostQuery) WithServices(opts ...func(*TcpServiceQuery)) *HostQuery {
+	query := (&TcpServiceClient{config: hq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	hq.withServices = query
+	return hq
 }
 
 // WithVirtualusers tells the query-builder to eager-load the nodes that are connected to
@@ -406,7 +442,8 @@ func (hq *HostQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Host, e
 	var (
 		nodes       = []*Host{}
 		_spec       = hq.querySpec()
-		loadedTypes = [2]bool{
+		loadedTypes = [3]bool{
+			hq.withServices != nil,
 			hq.withVirtualusers != nil,
 			hq.withHackers != nil,
 		}
@@ -429,6 +466,13 @@ func (hq *HostQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Host, e
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
+	if query := hq.withServices; query != nil {
+		if err := hq.loadServices(ctx, query, nodes,
+			func(n *Host) { n.Edges.Services = []*TcpService{} },
+			func(n *Host, e *TcpService) { n.Edges.Services = append(n.Edges.Services, e) }); err != nil {
+			return nil, err
+		}
+	}
 	if query := hq.withVirtualusers; query != nil {
 		if err := hq.loadVirtualusers(ctx, query, nodes,
 			func(n *Host) { n.Edges.Virtualusers = []*VirtualUser{} },
@@ -446,6 +490,67 @@ func (hq *HostQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Host, e
 	return nodes, nil
 }
 
+func (hq *HostQuery) loadServices(ctx context.Context, query *TcpServiceQuery, nodes []*Host, init func(*Host), assign func(*Host, *TcpService)) error {
+	edgeIDs := make([]driver.Value, len(nodes))
+	byID := make(map[int]*Host)
+	nids := make(map[int]map[*Host]struct{})
+	for i, node := range nodes {
+		edgeIDs[i] = node.ID
+		byID[node.ID] = node
+		if init != nil {
+			init(node)
+		}
+	}
+	query.Where(func(s *sql.Selector) {
+		joinT := sql.Table(host.ServicesTable)
+		s.Join(joinT).On(s.C(tcpservice.FieldID), joinT.C(host.ServicesPrimaryKey[1]))
+		s.Where(sql.InValues(joinT.C(host.ServicesPrimaryKey[0]), edgeIDs...))
+		columns := s.SelectedColumns()
+		s.Select(joinT.C(host.ServicesPrimaryKey[0]))
+		s.AppendSelect(columns...)
+		s.SetDistinct(false)
+	})
+	if err := query.prepareQuery(ctx); err != nil {
+		return err
+	}
+	qr := QuerierFunc(func(ctx context.Context, q Query) (Value, error) {
+		return query.sqlAll(ctx, func(_ context.Context, spec *sqlgraph.QuerySpec) {
+			assign := spec.Assign
+			values := spec.ScanValues
+			spec.ScanValues = func(columns []string) ([]any, error) {
+				values, err := values(columns[1:])
+				if err != nil {
+					return nil, err
+				}
+				return append([]any{new(sql.NullInt64)}, values...), nil
+			}
+			spec.Assign = func(columns []string, values []any) error {
+				outValue := int(values[0].(*sql.NullInt64).Int64)
+				inValue := int(values[1].(*sql.NullInt64).Int64)
+				if nids[inValue] == nil {
+					nids[inValue] = map[*Host]struct{}{byID[outValue]: {}}
+					return assign(columns[1:], values[1:])
+				}
+				nids[inValue][byID[outValue]] = struct{}{}
+				return nil
+			}
+		})
+	})
+	neighbors, err := withInterceptors[[]*TcpService](ctx, query, qr, query.inters)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected "services" node returned %v`, n.ID)
+		}
+		for kn := range nodes {
+			assign(kn, n)
+		}
+	}
+	return nil
+}
 func (hq *HostQuery) loadVirtualusers(ctx context.Context, query *VirtualUserQuery, nodes []*Host, init func(*Host), assign func(*Host, *VirtualUser)) error {
 	fks := make([]driver.Value, 0, len(nodes))
 	nodeids := make(map[int]*Host)

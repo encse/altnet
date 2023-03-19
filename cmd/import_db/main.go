@@ -9,11 +9,14 @@ import (
 	"math/rand"
 	"strings"
 
+	"entgo.io/ent/dialect/sql"
 	"github.com/encse/altnet/ent"
 	"github.com/encse/altnet/ent/host"
-	"github.com/encse/altnet/ent/schema"
+	"github.com/encse/altnet/ent/tcpservice"
 	"github.com/encse/altnet/lib/io"
 	"github.com/encse/altnet/lib/milnet"
+	"github.com/encse/altnet/lib/slices"
+	"github.com/encse/altnet/schema"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -31,6 +34,11 @@ func main() {
 
 	_, err = client.Host.Delete().Exec(ctx)
 	io.FatalIfError(err)
+
+	err = importServices(ctx, client)
+	if err != nil {
+		fmt.Println("could not import services", err)
+	}
 
 	err = importUumap(ctx, client)
 	if err != nil {
@@ -159,6 +167,34 @@ func importBbs(ctx context.Context, client *ent.Client) error {
 	return nil
 }
 
+func importServices(ctx context.Context, client *ent.Client) error {
+	fmt.Println("import services")
+	uumapBytes, err := ioutil.ReadFile("data/services.json")
+	if err != nil {
+		return err
+	}
+
+	var repr []ent.TcpService
+	err = json.Unmarshal(uumapBytes, &repr)
+	if err != nil {
+		return err
+	}
+
+	for _, v := range repr {
+		_, err := client.TcpService.Create().
+			SetDescription(v.Description).
+			SetName(v.Name).
+			SetPort(v.Port).
+			Save(ctx)
+		if err != nil {
+			fmt.Println(v.Name, err)
+			continue
+		}
+	}
+
+	return nil
+}
+
 func importUumap(ctx context.Context, client *ent.Client) error {
 	fmt.Println("import umap")
 	uumapBytes, err := ioutil.ReadFile("data/uumap.json")
@@ -173,7 +209,7 @@ func importUumap(ctx context.Context, client *ent.Client) error {
 	}
 
 	for _, v := range repr {
-		_, err := client.Host.Create().
+		h, err := client.Host.Create().
 			SetName(v.Name).
 			SetType(host.TypeUucp).
 			SetEntry(v.Entry).
@@ -191,7 +227,42 @@ func importUumap(ctx context.Context, client *ent.Client) error {
 			fmt.Println(v.Name, err)
 			continue
 		}
+
+		// add random services
+		addRandomServices(ctx, client, h)
+
 	}
+	return nil
+}
+
+func addRandomServices(ctx context.Context, client *ent.Client, host *ent.Host) error {
+	services := make([]*ent.TcpService, 0)
+	services = append(services, client.TcpService.Query().Where(tcpservice.PortEQ(20)).OnlyX(ctx))
+	services = append(services, client.TcpService.Query().Where(tcpservice.PortEQ(21)).OnlyX(ctx))
+	services = append(services, client.TcpService.Query().Where(tcpservice.PortEQ(23)).OnlyX(ctx))
+	services = append(services, client.TcpService.Query().Where(tcpservice.PortEQ(79)).OnlyX(ctx))
+	services = append(services, client.TcpService.Query().Where(tcpservice.PortEQ(513)).OnlyX(ctx))
+
+	c := 1 + rand.Intn(2)
+
+	for i := 0; i < c; i++ {
+		service := client.TcpService.Query().
+			Where(tcpservice.PortLT(1024)).
+			Order(func(s *sql.Selector) { s.OrderBy("RANDOM()") }).
+			Limit(1).
+			AllX(ctx)[0]
+
+		contains := slices.Any(
+			services,
+			func(s *ent.TcpService) bool { return s.Port == service.Port },
+		)
+
+		if !contains {
+			services = append(services, service)
+		}
+	}
+
+	host.Update().AddServices(services...).ExecX(ctx)
 	return nil
 }
 

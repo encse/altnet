@@ -9,8 +9,8 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/encse/altnet/ent/schema"
 	"github.com/encse/altnet/ent/virtualuser"
+	"github.com/encse/altnet/schema"
 )
 
 // VirtualUserCreate is the builder for creating a VirtualUser entity.

@@ -6,7 +6,7 @@ import (
 
 	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/encse/altnet/ent/host"
-	"github.com/encse/altnet/ent/schema"
+	"github.com/encse/altnet/schema"
 
 	_ "github.com/mattn/go-sqlite3"
 )

@@ -15,10 +15,10 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"github.com/encse/altnet/ent/host"
-	"github.com/encse/altnet/ent/schema"
 	"github.com/encse/altnet/lib/io"
 	"github.com/encse/altnet/lib/log"
 	"github.com/encse/altnet/lib/uumap"
+	"github.com/encse/altnet/schema"
 )
 
 const altnetRoot = "data/altnet"

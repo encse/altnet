@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/encse/altnet/ent/schema"
+	"github.com/encse/altnet/schema"
 )
 
 type key string

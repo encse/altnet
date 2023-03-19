@@ -7,11 +7,11 @@ import (
 	"time"
 
 	"github.com/encse/altnet/ent"
-	"github.com/encse/altnet/ent/schema"
 	"github.com/encse/altnet/ent/user"
 	"github.com/encse/altnet/lib/io"
 	"github.com/encse/altnet/lib/log"
 	"github.com/encse/altnet/lib/uumap"
+	"github.com/encse/altnet/schema"
 	"golang.org/x/crypto/bcrypt"
 )
 

@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"entgo.io/ent/dialect/sql"
-	"github.com/encse/altnet/ent/schema"
 	"github.com/encse/altnet/ent/user"
+	"github.com/encse/altnet/schema"
 )
 
 // User is the model entity for the User schema.

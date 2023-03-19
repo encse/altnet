@@ -3,8 +3,8 @@ package milnet
 import (
 	"math/rand"
 
-	"github.com/encse/altnet/ent/schema"
 	"github.com/encse/altnet/lib/slices"
+	"github.com/encse/altnet/schema"
 )
 
 func RandomWord() string {

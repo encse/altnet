@@ -16,6 +16,8 @@ type Tx struct {
 	Host *HostClient
 	// Joke is the client for interacting with the Joke builders.
 	Joke *JokeClient
+	// TcpService is the client for interacting with the TcpService builders.
+	TcpService *TcpServiceClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 	// VirtualUser is the client for interacting with the VirtualUser builders.
@@ -153,6 +155,7 @@ func (tx *Tx) Client() *Client {
 func (tx *Tx) init() {
 	tx.Host = NewHostClient(tx.config)
 	tx.Joke = NewJokeClient(tx.config)
+	tx.TcpService = NewTcpServiceClient(tx.config)
 	tx.User = NewUserClient(tx.config)
 	tx.VirtualUser = NewVirtualUserClient(tx.config)
 }

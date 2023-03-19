@@ -6,7 +6,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/encse/altnet/ent/predicate"
-	"github.com/encse/altnet/ent/schema"
+	"github.com/encse/altnet/schema"
 )
 
 // ID filters vertices based on their ID field.
@@ -742,6 +742,33 @@ func NeighboursIsNil() predicate.Host {
 // NeighboursNotNil applies the NotNil predicate on the "neighbours" field.
 func NeighboursNotNil() predicate.Host {
 	return predicate.Host(sql.FieldNotNull(FieldNeighbours))
+}
+
+// HasServices applies the HasEdge predicate on the "services" edge.
+func HasServices() predicate.Host {
+	return predicate.Host(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, ServicesTable, ServicesPrimaryKey...),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasServicesWith applies the HasEdge predicate on the "services" edge with a given conditions (other predicates).
+func HasServicesWith(preds ...predicate.TcpService) predicate.Host {
+	return predicate.Host(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(ServicesInverseTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, ServicesTable, ServicesPrimaryKey...),
+		)
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
 }
 
 // HasVirtualusers applies the HasEdge predicate on the "virtualusers" edge.

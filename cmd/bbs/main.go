@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 	"syscall"
+	"time"
 
-	"github.com/encse/altnet/ent/schema"
 	"github.com/encse/altnet/lib/altnet"
 	"github.com/encse/altnet/lib/config"
 	"github.com/encse/altnet/lib/csokavar"
@@ -14,6 +14,7 @@ import (
 	"github.com/encse/altnet/lib/log"
 	"github.com/encse/altnet/lib/uman"
 	"github.com/encse/altnet/lib/uumap"
+	"github.com/encse/altnet/schema"
 	"golang.org/x/term"
 )
 
@@ -43,12 +44,13 @@ func main() {
 	fmt.Println()
 	fmt.Println("Welcome", loginres.User)
 	if loginres.LastLoginFailure != nil {
-		fmt.Println("Last login failure", *loginres.LastLoginFailure)
+		fmt.Println("Last login failure", loginres.LastLoginFailure.Format(time.RFC1123))
 	}
 
 	if loginres.LastLogin != nil {
-		fmt.Println("Last login", *loginres.LastLogin)
+		fmt.Println("Last login", loginres.LastLogin.Format(time.RFC1123))
 	}
+	fmt.Println()
 
 loop:
 	for {

@@ -7,8 +7,8 @@ import (
 	"strings"
 
 	"entgo.io/ent/dialect/sql"
-	"github.com/encse/altnet/ent/schema"
 	"github.com/encse/altnet/ent/virtualuser"
+	"github.com/encse/altnet/schema"
 )
 
 // VirtualUser is the model entity for the VirtualUser schema.

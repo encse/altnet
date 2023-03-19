@@ -13,9 +13,10 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/encse/altnet/ent/host"
 	"github.com/encse/altnet/ent/predicate"
-	"github.com/encse/altnet/ent/schema"
+	"github.com/encse/altnet/ent/tcpservice"
 	"github.com/encse/altnet/ent/user"
 	"github.com/encse/altnet/ent/virtualuser"
+	"github.com/encse/altnet/schema"
 )
 
 // HostUpdate is the builder for updating Host entities.
@@ -185,6 +186,21 @@ func (hu *HostUpdate) ClearNeighbours() *HostUpdate {
 	return hu
 }
 
+// AddServiceIDs adds the "services" edge to the TcpService entity by IDs.
+func (hu *HostUpdate) AddServiceIDs(ids ...int) *HostUpdate {
+	hu.mutation.AddServiceIDs(ids...)
+	return hu
+}
+
+// AddServices adds the "services" edges to the TcpService entity.
+func (hu *HostUpdate) AddServices(t ...*TcpService) *HostUpdate {
+	ids := make([]int, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return hu.AddServiceIDs(ids...)
+}
+
 // AddVirtualuserIDs adds the "virtualusers" edge to the VirtualUser entity by IDs.
 func (hu *HostUpdate) AddVirtualuserIDs(ids ...int) *HostUpdate {
 	hu.mutation.AddVirtualuserIDs(ids...)
@@ -218,6 +234,27 @@ func (hu *HostUpdate) AddHackers(u ...*User) *HostUpdate {
 // Mutation returns the HostMutation object of the builder.
 func (hu *HostUpdate) Mutation() *HostMutation {
 	return hu.mutation
+}
+
+// ClearServices clears all "services" edges to the TcpService entity.
+func (hu *HostUpdate) ClearServices() *HostUpdate {
+	hu.mutation.ClearServices()
+	return hu
+}
+
+// RemoveServiceIDs removes the "services" edge to TcpService entities by IDs.
+func (hu *HostUpdate) RemoveServiceIDs(ids ...int) *HostUpdate {
+	hu.mutation.RemoveServiceIDs(ids...)
+	return hu
+}
+
+// RemoveServices removes "services" edges to TcpService entities.
+func (hu *HostUpdate) RemoveServices(t ...*TcpService) *HostUpdate {
+	ids := make([]int, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return hu.RemoveServiceIDs(ids...)
 }
 
 // ClearVirtualusers clears all "virtualusers" edges to the VirtualUser entity.
@@ -359,6 +396,60 @@ func (hu *HostUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if hu.mutation.NeighboursCleared() {
 		_spec.ClearField(host.FieldNeighbours, field.TypeJSON)
+	}
+	if hu.mutation.ServicesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   host.ServicesTable,
+			Columns: host.ServicesPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: tcpservice.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := hu.mutation.RemovedServicesIDs(); len(nodes) > 0 && !hu.mutation.ServicesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   host.ServicesTable,
+			Columns: host.ServicesPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: tcpservice.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := hu.mutation.ServicesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   host.ServicesTable,
+			Columns: host.ServicesPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: tcpservice.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if hu.mutation.VirtualusersCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -642,6 +733,21 @@ func (huo *HostUpdateOne) ClearNeighbours() *HostUpdateOne {
 	return huo
 }
 
+// AddServiceIDs adds the "services" edge to the TcpService entity by IDs.
+func (huo *HostUpdateOne) AddServiceIDs(ids ...int) *HostUpdateOne {
+	huo.mutation.AddServiceIDs(ids...)
+	return huo
+}
+
+// AddServices adds the "services" edges to the TcpService entity.
+func (huo *HostUpdateOne) AddServices(t ...*TcpService) *HostUpdateOne {
+	ids := make([]int, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return huo.AddServiceIDs(ids...)
+}
+
 // AddVirtualuserIDs adds the "virtualusers" edge to the VirtualUser entity by IDs.
 func (huo *HostUpdateOne) AddVirtualuserIDs(ids ...int) *HostUpdateOne {
 	huo.mutation.AddVirtualuserIDs(ids...)
@@ -675,6 +781,27 @@ func (huo *HostUpdateOne) AddHackers(u ...*User) *HostUpdateOne {
 // Mutation returns the HostMutation object of the builder.
 func (huo *HostUpdateOne) Mutation() *HostMutation {
 	return huo.mutation
+}
+
+// ClearServices clears all "services" edges to the TcpService entity.
+func (huo *HostUpdateOne) ClearServices() *HostUpdateOne {
+	huo.mutation.ClearServices()
+	return huo
+}
+
+// RemoveServiceIDs removes the "services" edge to TcpService entities by IDs.
+func (huo *HostUpdateOne) RemoveServiceIDs(ids ...int) *HostUpdateOne {
+	huo.mutation.RemoveServiceIDs(ids...)
+	return huo
+}
+
+// RemoveServices removes "services" edges to TcpService entities.
+func (huo *HostUpdateOne) RemoveServices(t ...*TcpService) *HostUpdateOne {
+	ids := make([]int, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return huo.RemoveServiceIDs(ids...)
 }
 
 // ClearVirtualusers clears all "virtualusers" edges to the VirtualUser entity.
@@ -846,6 +973,60 @@ func (huo *HostUpdateOne) sqlSave(ctx context.Context) (_node *Host, err error) 
 	}
 	if huo.mutation.NeighboursCleared() {
 		_spec.ClearField(host.FieldNeighbours, field.TypeJSON)
+	}
+	if huo.mutation.ServicesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   host.ServicesTable,
+			Columns: host.ServicesPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: tcpservice.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := huo.mutation.RemovedServicesIDs(); len(nodes) > 0 && !huo.mutation.ServicesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   host.ServicesTable,
+			Columns: host.ServicesPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: tcpservice.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := huo.mutation.ServicesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   host.ServicesTable,
+			Columns: host.ServicesPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: tcpservice.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if huo.mutation.VirtualusersCleared() {
 		edge := &sqlgraph.EdgeSpec{

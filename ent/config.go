@@ -29,12 +29,14 @@ type (
 	hooks struct {
 		Host        []ent.Hook
 		Joke        []ent.Hook
+		TcpService  []ent.Hook
 		User        []ent.Hook
 		VirtualUser []ent.Hook
 	}
 	inters struct {
 		Host        []ent.Interceptor
 		Joke        []ent.Interceptor
+		TcpService  []ent.Interceptor
 		User        []ent.Interceptor
 		VirtualUser []ent.Interceptor
 	}

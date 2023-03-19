@@ -12,9 +12,10 @@ import (
 	"github.com/encse/altnet/ent/host"
 	"github.com/encse/altnet/ent/joke"
 	"github.com/encse/altnet/ent/predicate"
-	"github.com/encse/altnet/ent/schema"
+	"github.com/encse/altnet/ent/tcpservice"
 	"github.com/encse/altnet/ent/user"
 	"github.com/encse/altnet/ent/virtualuser"
+	"github.com/encse/altnet/schema"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
@@ -31,6 +32,7 @@ const (
 	// Node types.
 	TypeHost        = "Host"
 	TypeJoke        = "Joke"
+	TypeTcpService  = "TcpService"
 	TypeUser        = "User"
 	TypeVirtualUser = "VirtualUser"
 )
@@ -56,6 +58,9 @@ type HostMutation struct {
 	neighbours          *[]schema.HostName
 	appendneighbours    []schema.HostName
 	clearedFields       map[string]struct{}
+	services            map[int]struct{}
+	removedservices     map[int]struct{}
+	clearedservices     bool
 	virtualusers        map[int]struct{}
 	removedvirtualusers map[int]struct{}
 	clearedvirtualusers bool
@@ -655,6 +660,60 @@ func (m *HostMutation) ResetNeighbours() {
 	delete(m.clearedFields, host.FieldNeighbours)
 }
 
+// AddServiceIDs adds the "services" edge to the TcpService entity by ids.
+func (m *HostMutation) AddServiceIDs(ids ...int) {
+	if m.services == nil {
+		m.services = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.services[ids[i]] = struct{}{}
+	}
+}
+
+// ClearServices clears the "services" edge to the TcpService entity.
+func (m *HostMutation) ClearServices() {
+	m.clearedservices = true
+}
+
+// ServicesCleared reports if the "services" edge to the TcpService entity was cleared.
+func (m *HostMutation) ServicesCleared() bool {
+	return m.clearedservices
+}
+
+// RemoveServiceIDs removes the "services" edge to the TcpService entity by IDs.
+func (m *HostMutation) RemoveServiceIDs(ids ...int) {
+	if m.removedservices == nil {
+		m.removedservices = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.services, ids[i])
+		m.removedservices[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedServices returns the removed IDs of the "services" edge to the TcpService entity.
+func (m *HostMutation) RemovedServicesIDs() (ids []int) {
+	for id := range m.removedservices {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ServicesIDs returns the "services" edge IDs in the mutation.
+func (m *HostMutation) ServicesIDs() (ids []int) {
+	for id := range m.services {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetServices resets all changes to the "services" edge.
+func (m *HostMutation) ResetServices() {
+	m.services = nil
+	m.clearedservices = false
+	m.removedservices = nil
+}
+
 // AddVirtualuserIDs adds the "virtualusers" edge to the VirtualUser entity by ids.
 func (m *HostMutation) AddVirtualuserIDs(ids ...int) {
 	if m.virtualusers == nil {
@@ -1098,7 +1157,10 @@ func (m *HostMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *HostMutation) AddedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
+	if m.services != nil {
+		edges = append(edges, host.EdgeServices)
+	}
 	if m.virtualusers != nil {
 		edges = append(edges, host.EdgeVirtualusers)
 	}
@@ -1112,6 +1174,12 @@ func (m *HostMutation) AddedEdges() []string {
 // name in this mutation.
 func (m *HostMutation) AddedIDs(name string) []ent.Value {
 	switch name {
+	case host.EdgeServices:
+		ids := make([]ent.Value, 0, len(m.services))
+		for id := range m.services {
+			ids = append(ids, id)
+		}
+		return ids
 	case host.EdgeVirtualusers:
 		ids := make([]ent.Value, 0, len(m.virtualusers))
 		for id := range m.virtualusers {
@@ -1130,7 +1198,10 @@ func (m *HostMutation) AddedIDs(name string) []ent.Value {
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *HostMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
+	if m.removedservices != nil {
+		edges = append(edges, host.EdgeServices)
+	}
 	if m.removedvirtualusers != nil {
 		edges = append(edges, host.EdgeVirtualusers)
 	}
@@ -1144,6 +1215,12 @@ func (m *HostMutation) RemovedEdges() []string {
 // the given name in this mutation.
 func (m *HostMutation) RemovedIDs(name string) []ent.Value {
 	switch name {
+	case host.EdgeServices:
+		ids := make([]ent.Value, 0, len(m.removedservices))
+		for id := range m.removedservices {
+			ids = append(ids, id)
+		}
+		return ids
 	case host.EdgeVirtualusers:
 		ids := make([]ent.Value, 0, len(m.removedvirtualusers))
 		for id := range m.removedvirtualusers {
@@ -1162,7 +1239,10 @@ func (m *HostMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *HostMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
+	if m.clearedservices {
+		edges = append(edges, host.EdgeServices)
+	}
 	if m.clearedvirtualusers {
 		edges = append(edges, host.EdgeVirtualusers)
 	}
@@ -1176,6 +1256,8 @@ func (m *HostMutation) ClearedEdges() []string {
 // was cleared in this mutation.
 func (m *HostMutation) EdgeCleared(name string) bool {
 	switch name {
+	case host.EdgeServices:
+		return m.clearedservices
 	case host.EdgeVirtualusers:
 		return m.clearedvirtualusers
 	case host.EdgeHackers:
@@ -1196,6 +1278,9 @@ func (m *HostMutation) ClearEdge(name string) error {
 // It returns an error if the edge is not defined in the schema.
 func (m *HostMutation) ResetEdge(name string) error {
 	switch name {
+	case host.EdgeServices:
+		m.ResetServices()
+		return nil
 	case host.EdgeVirtualusers:
 		m.ResetVirtualusers()
 		return nil
@@ -1590,6 +1675,569 @@ func (m *JokeMutation) ClearEdge(name string) error {
 // It returns an error if the edge is not defined in the schema.
 func (m *JokeMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown Joke edge %s", name)
+}
+
+// TcpServiceMutation represents an operation that mutates the TcpService nodes in the graph.
+type TcpServiceMutation struct {
+	config
+	op            Op
+	typ           string
+	id            *int
+	name          *string
+	port          *int
+	addport       *int
+	description   *string
+	clearedFields map[string]struct{}
+	hosts         map[int]struct{}
+	removedhosts  map[int]struct{}
+	clearedhosts  bool
+	done          bool
+	oldValue      func(context.Context) (*TcpService, error)
+	predicates    []predicate.TcpService
+}
+
+var _ ent.Mutation = (*TcpServiceMutation)(nil)
+
+// tcpserviceOption allows management of the mutation configuration using functional options.
+type tcpserviceOption func(*TcpServiceMutation)
+
+// newTcpServiceMutation creates new mutation for the TcpService entity.
+func newTcpServiceMutation(c config, op Op, opts ...tcpserviceOption) *TcpServiceMutation {
+	m := &TcpServiceMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeTcpService,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withTcpServiceID sets the ID field of the mutation.
+func withTcpServiceID(id int) tcpserviceOption {
+	return func(m *TcpServiceMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *TcpService
+		)
+		m.oldValue = func(ctx context.Context) (*TcpService, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().TcpService.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withTcpService sets the old TcpService of the mutation.
+func withTcpService(node *TcpService) tcpserviceOption {
+	return func(m *TcpServiceMutation) {
+		m.oldValue = func(context.Context) (*TcpService, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m TcpServiceMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m TcpServiceMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *TcpServiceMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *TcpServiceMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().TcpService.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetName sets the "name" field.
+func (m *TcpServiceMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *TcpServiceMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the TcpService entity.
+// If the TcpService object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TcpServiceMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *TcpServiceMutation) ResetName() {
+	m.name = nil
+}
+
+// SetPort sets the "port" field.
+func (m *TcpServiceMutation) SetPort(i int) {
+	m.port = &i
+	m.addport = nil
+}
+
+// Port returns the value of the "port" field in the mutation.
+func (m *TcpServiceMutation) Port() (r int, exists bool) {
+	v := m.port
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPort returns the old "port" field's value of the TcpService entity.
+// If the TcpService object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TcpServiceMutation) OldPort(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPort is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPort requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPort: %w", err)
+	}
+	return oldValue.Port, nil
+}
+
+// AddPort adds i to the "port" field.
+func (m *TcpServiceMutation) AddPort(i int) {
+	if m.addport != nil {
+		*m.addport += i
+	} else {
+		m.addport = &i
+	}
+}
+
+// AddedPort returns the value that was added to the "port" field in this mutation.
+func (m *TcpServiceMutation) AddedPort() (r int, exists bool) {
+	v := m.addport
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetPort resets all changes to the "port" field.
+func (m *TcpServiceMutation) ResetPort() {
+	m.port = nil
+	m.addport = nil
+}
+
+// SetDescription sets the "description" field.
+func (m *TcpServiceMutation) SetDescription(s string) {
+	m.description = &s
+}
+
+// Description returns the value of the "description" field in the mutation.
+func (m *TcpServiceMutation) Description() (r string, exists bool) {
+	v := m.description
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDescription returns the old "description" field's value of the TcpService entity.
+// If the TcpService object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TcpServiceMutation) OldDescription(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDescription is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDescription requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDescription: %w", err)
+	}
+	return oldValue.Description, nil
+}
+
+// ResetDescription resets all changes to the "description" field.
+func (m *TcpServiceMutation) ResetDescription() {
+	m.description = nil
+}
+
+// AddHostIDs adds the "hosts" edge to the Host entity by ids.
+func (m *TcpServiceMutation) AddHostIDs(ids ...int) {
+	if m.hosts == nil {
+		m.hosts = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.hosts[ids[i]] = struct{}{}
+	}
+}
+
+// ClearHosts clears the "hosts" edge to the Host entity.
+func (m *TcpServiceMutation) ClearHosts() {
+	m.clearedhosts = true
+}
+
+// HostsCleared reports if the "hosts" edge to the Host entity was cleared.
+func (m *TcpServiceMutation) HostsCleared() bool {
+	return m.clearedhosts
+}
+
+// RemoveHostIDs removes the "hosts" edge to the Host entity by IDs.
+func (m *TcpServiceMutation) RemoveHostIDs(ids ...int) {
+	if m.removedhosts == nil {
+		m.removedhosts = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.hosts, ids[i])
+		m.removedhosts[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedHosts returns the removed IDs of the "hosts" edge to the Host entity.
+func (m *TcpServiceMutation) RemovedHostsIDs() (ids []int) {
+	for id := range m.removedhosts {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// HostsIDs returns the "hosts" edge IDs in the mutation.
+func (m *TcpServiceMutation) HostsIDs() (ids []int) {
+	for id := range m.hosts {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetHosts resets all changes to the "hosts" edge.
+func (m *TcpServiceMutation) ResetHosts() {
+	m.hosts = nil
+	m.clearedhosts = false
+	m.removedhosts = nil
+}
+
+// Where appends a list predicates to the TcpServiceMutation builder.
+func (m *TcpServiceMutation) Where(ps ...predicate.TcpService) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the TcpServiceMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *TcpServiceMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.TcpService, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *TcpServiceMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *TcpServiceMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (TcpService).
+func (m *TcpServiceMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *TcpServiceMutation) Fields() []string {
+	fields := make([]string, 0, 3)
+	if m.name != nil {
+		fields = append(fields, tcpservice.FieldName)
+	}
+	if m.port != nil {
+		fields = append(fields, tcpservice.FieldPort)
+	}
+	if m.description != nil {
+		fields = append(fields, tcpservice.FieldDescription)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *TcpServiceMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case tcpservice.FieldName:
+		return m.Name()
+	case tcpservice.FieldPort:
+		return m.Port()
+	case tcpservice.FieldDescription:
+		return m.Description()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *TcpServiceMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case tcpservice.FieldName:
+		return m.OldName(ctx)
+	case tcpservice.FieldPort:
+		return m.OldPort(ctx)
+	case tcpservice.FieldDescription:
+		return m.OldDescription(ctx)
+	}
+	return nil, fmt.Errorf("unknown TcpService field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *TcpServiceMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case tcpservice.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
+	case tcpservice.FieldPort:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPort(v)
+		return nil
+	case tcpservice.FieldDescription:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDescription(v)
+		return nil
+	}
+	return fmt.Errorf("unknown TcpService field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *TcpServiceMutation) AddedFields() []string {
+	var fields []string
+	if m.addport != nil {
+		fields = append(fields, tcpservice.FieldPort)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *TcpServiceMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case tcpservice.FieldPort:
+		return m.AddedPort()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *TcpServiceMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case tcpservice.FieldPort:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddPort(v)
+		return nil
+	}
+	return fmt.Errorf("unknown TcpService numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *TcpServiceMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *TcpServiceMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *TcpServiceMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown TcpService nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *TcpServiceMutation) ResetField(name string) error {
+	switch name {
+	case tcpservice.FieldName:
+		m.ResetName()
+		return nil
+	case tcpservice.FieldPort:
+		m.ResetPort()
+		return nil
+	case tcpservice.FieldDescription:
+		m.ResetDescription()
+		return nil
+	}
+	return fmt.Errorf("unknown TcpService field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *TcpServiceMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.hosts != nil {
+		edges = append(edges, tcpservice.EdgeHosts)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *TcpServiceMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case tcpservice.EdgeHosts:
+		ids := make([]ent.Value, 0, len(m.hosts))
+		for id := range m.hosts {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *TcpServiceMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.removedhosts != nil {
+		edges = append(edges, tcpservice.EdgeHosts)
+	}
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *TcpServiceMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case tcpservice.EdgeHosts:
+		ids := make([]ent.Value, 0, len(m.removedhosts))
+		for id := range m.removedhosts {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *TcpServiceMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.clearedhosts {
+		edges = append(edges, tcpservice.EdgeHosts)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *TcpServiceMutation) EdgeCleared(name string) bool {
+	switch name {
+	case tcpservice.EdgeHosts:
+		return m.clearedhosts
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *TcpServiceMutation) ClearEdge(name string) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown TcpService unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *TcpServiceMutation) ResetEdge(name string) error {
+	switch name {
+	case tcpservice.EdgeHosts:
+		m.ResetHosts()
+		return nil
+	}
+	return fmt.Errorf("unknown TcpService edge %s", name)
 }
 
 // UserMutation represents an operation that mutates the User nodes in the graph.

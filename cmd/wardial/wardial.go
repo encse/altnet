@@ -8,11 +8,11 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/encse/altnet/ent/schema"
 	"github.com/encse/altnet/lib/altnet"
 	"github.com/encse/altnet/lib/io"
 	"github.com/encse/altnet/lib/slices"
 	"github.com/encse/altnet/lib/uumap"
+	"github.com/encse/altnet/schema"
 )
 
 func main() {

@@ -12,6 +12,7 @@ import (
 
 	"github.com/encse/altnet/ent/host"
 	"github.com/encse/altnet/ent/joke"
+	"github.com/encse/altnet/ent/tcpservice"
 	"github.com/encse/altnet/ent/user"
 	"github.com/encse/altnet/ent/virtualuser"
 
@@ -29,6 +30,8 @@ type Client struct {
 	Host *HostClient
 	// Joke is the client for interacting with the Joke builders.
 	Joke *JokeClient
+	// TcpService is the client for interacting with the TcpService builders.
+	TcpService *TcpServiceClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 	// VirtualUser is the client for interacting with the VirtualUser builders.
@@ -48,6 +51,7 @@ func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
 	c.Host = NewHostClient(c.config)
 	c.Joke = NewJokeClient(c.config)
+	c.TcpService = NewTcpServiceClient(c.config)
 	c.User = NewUserClient(c.config)
 	c.VirtualUser = NewVirtualUserClient(c.config)
 }
@@ -85,6 +89,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		config:      cfg,
 		Host:        NewHostClient(cfg),
 		Joke:        NewJokeClient(cfg),
+		TcpService:  NewTcpServiceClient(cfg),
 		User:        NewUserClient(cfg),
 		VirtualUser: NewVirtualUserClient(cfg),
 	}, nil
@@ -108,6 +113,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		config:      cfg,
 		Host:        NewHostClient(cfg),
 		Joke:        NewJokeClient(cfg),
+		TcpService:  NewTcpServiceClient(cfg),
 		User:        NewUserClient(cfg),
 		VirtualUser: NewVirtualUserClient(cfg),
 	}, nil
@@ -140,6 +146,7 @@ func (c *Client) Close() error {
 func (c *Client) Use(hooks ...Hook) {
 	c.Host.Use(hooks...)
 	c.Joke.Use(hooks...)
+	c.TcpService.Use(hooks...)
 	c.User.Use(hooks...)
 	c.VirtualUser.Use(hooks...)
 }
@@ -149,6 +156,7 @@ func (c *Client) Use(hooks ...Hook) {
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	c.Host.Intercept(interceptors...)
 	c.Joke.Intercept(interceptors...)
+	c.TcpService.Intercept(interceptors...)
 	c.User.Intercept(interceptors...)
 	c.VirtualUser.Intercept(interceptors...)
 }
@@ -160,6 +168,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Host.mutate(ctx, m)
 	case *JokeMutation:
 		return c.Joke.mutate(ctx, m)
+	case *TcpServiceMutation:
+		return c.TcpService.mutate(ctx, m)
 	case *UserMutation:
 		return c.User.mutate(ctx, m)
 	case *VirtualUserMutation:
@@ -260,6 +270,22 @@ func (c *HostClient) GetX(ctx context.Context, id int) *Host {
 		panic(err)
 	}
 	return obj
+}
+
+// QueryServices queries the services edge of a Host.
+func (c *HostClient) QueryServices(h *Host) *TcpServiceQuery {
+	query := (&TcpServiceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := h.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(host.Table, host.FieldID, id),
+			sqlgraph.To(tcpservice.Table, tcpservice.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, host.ServicesTable, host.ServicesPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(h.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
 }
 
 // QueryVirtualusers queries the virtualusers edge of a Host.
@@ -434,6 +460,140 @@ func (c *JokeClient) mutate(ctx context.Context, m *JokeMutation) (Value, error)
 		return (&JokeDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown Joke mutation op: %q", m.Op())
+	}
+}
+
+// TcpServiceClient is a client for the TcpService schema.
+type TcpServiceClient struct {
+	config
+}
+
+// NewTcpServiceClient returns a client for the TcpService from the given config.
+func NewTcpServiceClient(c config) *TcpServiceClient {
+	return &TcpServiceClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `tcpservice.Hooks(f(g(h())))`.
+func (c *TcpServiceClient) Use(hooks ...Hook) {
+	c.hooks.TcpService = append(c.hooks.TcpService, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `tcpservice.Intercept(f(g(h())))`.
+func (c *TcpServiceClient) Intercept(interceptors ...Interceptor) {
+	c.inters.TcpService = append(c.inters.TcpService, interceptors...)
+}
+
+// Create returns a builder for creating a TcpService entity.
+func (c *TcpServiceClient) Create() *TcpServiceCreate {
+	mutation := newTcpServiceMutation(c.config, OpCreate)
+	return &TcpServiceCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of TcpService entities.
+func (c *TcpServiceClient) CreateBulk(builders ...*TcpServiceCreate) *TcpServiceCreateBulk {
+	return &TcpServiceCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for TcpService.
+func (c *TcpServiceClient) Update() *TcpServiceUpdate {
+	mutation := newTcpServiceMutation(c.config, OpUpdate)
+	return &TcpServiceUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *TcpServiceClient) UpdateOne(ts *TcpService) *TcpServiceUpdateOne {
+	mutation := newTcpServiceMutation(c.config, OpUpdateOne, withTcpService(ts))
+	return &TcpServiceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *TcpServiceClient) UpdateOneID(id int) *TcpServiceUpdateOne {
+	mutation := newTcpServiceMutation(c.config, OpUpdateOne, withTcpServiceID(id))
+	return &TcpServiceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for TcpService.
+func (c *TcpServiceClient) Delete() *TcpServiceDelete {
+	mutation := newTcpServiceMutation(c.config, OpDelete)
+	return &TcpServiceDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *TcpServiceClient) DeleteOne(ts *TcpService) *TcpServiceDeleteOne {
+	return c.DeleteOneID(ts.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *TcpServiceClient) DeleteOneID(id int) *TcpServiceDeleteOne {
+	builder := c.Delete().Where(tcpservice.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &TcpServiceDeleteOne{builder}
+}
+
+// Query returns a query builder for TcpService.
+func (c *TcpServiceClient) Query() *TcpServiceQuery {
+	return &TcpServiceQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeTcpService},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a TcpService entity by its id.
+func (c *TcpServiceClient) Get(ctx context.Context, id int) (*TcpService, error) {
+	return c.Query().Where(tcpservice.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *TcpServiceClient) GetX(ctx context.Context, id int) *TcpService {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryHosts queries the hosts edge of a TcpService.
+func (c *TcpServiceClient) QueryHosts(ts *TcpService) *HostQuery {
+	query := (&HostClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := ts.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(tcpservice.Table, tcpservice.FieldID, id),
+			sqlgraph.To(host.Table, host.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, tcpservice.HostsTable, tcpservice.HostsPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(ts.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *TcpServiceClient) Hooks() []Hook {
+	return c.hooks.TcpService
+}
+
+// Interceptors returns the client interceptors.
+func (c *TcpServiceClient) Interceptors() []Interceptor {
+	return c.inters.TcpService
+}
+
+func (c *TcpServiceClient) mutate(ctx context.Context, m *TcpServiceMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&TcpServiceCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&TcpServiceUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&TcpServiceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&TcpServiceDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown TcpService mutation op: %q", m.Op())
 	}
 }
 

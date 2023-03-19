@@ -5,7 +5,7 @@ package virtualuser
 import (
 	"entgo.io/ent/dialect/sql"
 	"github.com/encse/altnet/ent/predicate"
-	"github.com/encse/altnet/ent/schema"
+	"github.com/encse/altnet/schema"
 )
 
 // ID filters vertices based on their ID field.

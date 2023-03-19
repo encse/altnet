@@ -10,9 +10,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/encse/altnet/ent/schema"
 	"github.com/encse/altnet/lib/log"
 	"github.com/encse/altnet/lib/slices"
+	"github.com/encse/altnet/schema"
 	"golang.org/x/term"
 )
 

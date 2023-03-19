@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/encse/altnet/ent/host"
 	"github.com/encse/altnet/ent/joke"
+	"github.com/encse/altnet/ent/tcpservice"
 	"github.com/encse/altnet/ent/user"
 	"github.com/encse/altnet/ent/virtualuser"
 )
@@ -44,6 +45,7 @@ func columnChecker(table string) func(string) error {
 	checks := map[string]func(string) bool{
 		host.Table:        host.ValidColumn,
 		joke.Table:        joke.ValidColumn,
+		tcpservice.Table:  tcpservice.ValidColumn,
 		user.Table:        user.ValidColumn,
 		virtualuser.Table: virtualuser.ValidColumn,
 	}

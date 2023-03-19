@@ -10,9 +10,10 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/encse/altnet/ent/host"
-	"github.com/encse/altnet/ent/schema"
+	"github.com/encse/altnet/ent/tcpservice"
 	"github.com/encse/altnet/ent/user"
 	"github.com/encse/altnet/ent/virtualuser"
+	"github.com/encse/altnet/schema"
 )
 
 // HostCreate is the builder for creating a Host entity.
@@ -156,6 +157,21 @@ func (hc *HostCreate) SetPhone(sn []schema.PhoneNumber) *HostCreate {
 func (hc *HostCreate) SetNeighbours(sn []schema.HostName) *HostCreate {
 	hc.mutation.SetNeighbours(sn)
 	return hc
+}
+
+// AddServiceIDs adds the "services" edge to the TcpService entity by IDs.
+func (hc *HostCreate) AddServiceIDs(ids ...int) *HostCreate {
+	hc.mutation.AddServiceIDs(ids...)
+	return hc
+}
+
+// AddServices adds the "services" edges to the TcpService entity.
+func (hc *HostCreate) AddServices(t ...*TcpService) *HostCreate {
+	ids := make([]int, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return hc.AddServiceIDs(ids...)
 }
 
 // AddVirtualuserIDs adds the "virtualusers" edge to the VirtualUser entity by IDs.
@@ -367,6 +383,25 @@ func (hc *HostCreate) createSpec() (*Host, *sqlgraph.CreateSpec) {
 	if value, ok := hc.mutation.Neighbours(); ok {
 		_spec.SetField(host.FieldNeighbours, field.TypeJSON, value)
 		_node.Neighbours = value
+	}
+	if nodes := hc.mutation.ServicesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   host.ServicesTable,
+			Columns: host.ServicesPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: tcpservice.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := hc.mutation.VirtualusersIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

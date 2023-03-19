@@ -42,6 +42,19 @@ var (
 		Columns:    JokesColumns,
 		PrimaryKey: []*schema.Column{JokesColumns[0]},
 	}
+	// TCPServicesColumns holds the columns for the "tcp_services" table.
+	TCPServicesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "name", Type: field.TypeString},
+		{Name: "port", Type: field.TypeInt, Unique: true},
+		{Name: "description", Type: field.TypeString},
+	}
+	// TCPServicesTable holds the schema information for the "tcp_services" table.
+	TCPServicesTable = &schema.Table{
+		Name:       "tcp_services",
+		Columns:    TCPServicesColumns,
+		PrimaryKey: []*schema.Column{TCPServicesColumns[0]},
+	}
 	// UsersColumns holds the columns for the "users" table.
 	UsersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -77,6 +90,31 @@ var (
 			},
 		},
 	}
+	// HostServicesColumns holds the columns for the "host_services" table.
+	HostServicesColumns = []*schema.Column{
+		{Name: "host_id", Type: field.TypeInt},
+		{Name: "tcp_service_id", Type: field.TypeInt},
+	}
+	// HostServicesTable holds the schema information for the "host_services" table.
+	HostServicesTable = &schema.Table{
+		Name:       "host_services",
+		Columns:    HostServicesColumns,
+		PrimaryKey: []*schema.Column{HostServicesColumns[0], HostServicesColumns[1]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "host_services_host_id",
+				Columns:    []*schema.Column{HostServicesColumns[0]},
+				RefColumns: []*schema.Column{HostsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "host_services_tcp_service_id",
+				Columns:    []*schema.Column{HostServicesColumns[1]},
+				RefColumns: []*schema.Column{TCPServicesColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
 	// HostHackersColumns holds the columns for the "host_hackers" table.
 	HostHackersColumns = []*schema.Column{
 		{Name: "host_id", Type: field.TypeInt},
@@ -106,14 +144,18 @@ var (
 	Tables = []*schema.Table{
 		HostsTable,
 		JokesTable,
+		TCPServicesTable,
 		UsersTable,
 		VirtualUsersTable,
+		HostServicesTable,
 		HostHackersTable,
 	}
 )
 
 func init() {
 	VirtualUsersTable.ForeignKeys[0].RefTable = HostsTable
+	HostServicesTable.ForeignKeys[0].RefTable = HostsTable
+	HostServicesTable.ForeignKeys[1].RefTable = TCPServicesTable
 	HostHackersTable.ForeignKeys[0].RefTable = HostsTable
 	HostHackersTable.ForeignKeys[1].RefTable = UsersTable
 }

@@ -8,7 +8,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/encse/altnet/ent/predicate"
-	"github.com/encse/altnet/ent/schema"
+	"github.com/encse/altnet/schema"
 )
 
 // ID filters vertices based on their ID field.

@@ -8,7 +8,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqljson"
 	"github.com/encse/altnet/ent"
 	"github.com/encse/altnet/ent/host"
-	"github.com/encse/altnet/ent/schema"
+	"github.com/encse/altnet/schema"
 )
 
 func (n Network) FindPhoneNumbersWithPrefix(ctx context.Context, prefix string) []schema.PhoneNumber {

@@ -11,8 +11,8 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/encse/altnet/ent/host"
-	"github.com/encse/altnet/ent/schema"
 	"github.com/encse/altnet/ent/user"
+	"github.com/encse/altnet/schema"
 )
 
 // UserCreate is the builder for creating a User entity.

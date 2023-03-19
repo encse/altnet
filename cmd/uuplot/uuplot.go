@@ -8,11 +8,11 @@ import (
 	"strings"
 
 	mapset "github.com/deckarep/golang-set/v2"
-	"github.com/encse/altnet/ent/schema"
 	"github.com/encse/altnet/lib/altnet"
 	"github.com/encse/altnet/lib/io"
 	"github.com/encse/altnet/lib/log"
 	"github.com/encse/altnet/lib/uumap"
+	"github.com/encse/altnet/schema"
 )
 
 func main() {

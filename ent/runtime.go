@@ -4,7 +4,7 @@ package ent
 
 import (
 	"github.com/encse/altnet/ent/host"
-	"github.com/encse/altnet/ent/schema"
+	"github.com/encse/altnet/schema"
 )
 
 // The init function reads all schema descriptors with runtime code

@@ -9,7 +9,7 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"github.com/encse/altnet/ent/host"
-	"github.com/encse/altnet/ent/schema"
+	"github.com/encse/altnet/schema"
 )
 
 // Host is the model entity for the Host schema.
@@ -48,19 +48,30 @@ type Host struct {
 
 // HostEdges holds the relations/edges for other nodes in the graph.
 type HostEdges struct {
+	// Services holds the value of the services edge.
+	Services []*TcpService `json:"services,omitempty"`
 	// Virtualusers holds the value of the virtualusers edge.
 	Virtualusers []*VirtualUser `json:"virtualusers,omitempty"`
 	// Hackers holds the value of the hackers edge.
 	Hackers []*User `json:"hackers,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [2]bool
+	loadedTypes [3]bool
+}
+
+// ServicesOrErr returns the Services value or an error if the edge
+// was not loaded in eager-loading.
+func (e HostEdges) ServicesOrErr() ([]*TcpService, error) {
+	if e.loadedTypes[0] {
+		return e.Services, nil
+	}
+	return nil, &NotLoadedError{edge: "services"}
 }
 
 // VirtualusersOrErr returns the Virtualusers value or an error if the edge
 // was not loaded in eager-loading.
 func (e HostEdges) VirtualusersOrErr() ([]*VirtualUser, error) {
-	if e.loadedTypes[0] {
+	if e.loadedTypes[1] {
 		return e.Virtualusers, nil
 	}
 	return nil, &NotLoadedError{edge: "virtualusers"}
@@ -69,7 +80,7 @@ func (e HostEdges) VirtualusersOrErr() ([]*VirtualUser, error) {
 // HackersOrErr returns the Hackers value or an error if the edge
 // was not loaded in eager-loading.
 func (e HostEdges) HackersOrErr() ([]*User, error) {
-	if e.loadedTypes[1] {
+	if e.loadedTypes[2] {
 		return e.Hackers, nil
 	}
 	return nil, &NotLoadedError{edge: "hackers"}
@@ -186,6 +197,11 @@ func (h *Host) assignValues(columns []string, values []any) error {
 		}
 	}
 	return nil
+}
+
+// QueryServices queries the "services" edge of the Host entity.
+func (h *Host) QueryServices() *TcpServiceQuery {
+	return NewHostClient(h.config).QueryServices(h)
 }
 
 // QueryVirtualusers queries the "virtualusers" edge of the Host entity.

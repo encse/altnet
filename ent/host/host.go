@@ -35,12 +35,19 @@ const (
 	FieldPhone = "phone"
 	// FieldNeighbours holds the string denoting the neighbours field in the database.
 	FieldNeighbours = "neighbours"
+	// EdgeServices holds the string denoting the services edge name in mutations.
+	EdgeServices = "services"
 	// EdgeVirtualusers holds the string denoting the virtualusers edge name in mutations.
 	EdgeVirtualusers = "virtualusers"
 	// EdgeHackers holds the string denoting the hackers edge name in mutations.
 	EdgeHackers = "hackers"
 	// Table holds the table name of the host in the database.
 	Table = "hosts"
+	// ServicesTable is the table that holds the services relation/edge. The primary key declared below.
+	ServicesTable = "host_services"
+	// ServicesInverseTable is the table name for the TcpService entity.
+	// It exists in this package in order to avoid circular dependency with the "tcpservice" package.
+	ServicesInverseTable = "tcp_services"
 	// VirtualusersTable is the table that holds the virtualusers relation/edge.
 	VirtualusersTable = "virtual_users"
 	// VirtualusersInverseTable is the table name for the VirtualUser entity.
@@ -73,6 +80,9 @@ var Columns = []string{
 }
 
 var (
+	// ServicesPrimaryKey and ServicesColumn2 are the table columns denoting the
+	// primary key for the services relation (M2M).
+	ServicesPrimaryKey = []string{"host_id", "tcp_service_id"}
 	// HackersPrimaryKey and HackersColumn2 are the table columns denoting the
 	// primary key for the hackers relation (M2M).
 	HackersPrimaryKey = []string{"host_id", "user_id"}
