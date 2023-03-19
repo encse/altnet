@@ -29,6 +29,7 @@ var commands = [][]string{
 	{"wardial <area code>", "automated phone number scanner"},
 	{"zrun <game>", "play Z-machine games"},
 	{"tacnuke <tel>", "TAC CRC vulnerability exploit"},
+	{"porthack <host>", "scans for TCP service vulnerabilities to gain access"},
 }
 
 func main() {

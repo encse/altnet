@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/encse/altnet/lib/altnet"
 	"github.com/encse/altnet/lib/io"
@@ -21,7 +20,7 @@ func main() {
 	io.FatalIfError(err)
 	defer network.Close()
 
-	fmt.Printf("Connected to %s\n", strings.ToUpper(string(hostName)))
+	fmt.Printf("Connected to %s\n", hostName.ToUpper())
 	fmt.Println()
 	fmt.Println("Enter your username or GUEST")
 

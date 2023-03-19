@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/encse/altnet/lib/altnet"
@@ -18,7 +17,7 @@ func main() {
 	procinfos, err := altnet.GetProcesses(host)
 	io.FatalIfError(err)
 
-	fmt.Printf("HOST %s PROCESS TABLE\n", strings.ToUpper(string(host)))
+	fmt.Printf("HOST %s PROCESS TABLE\n", host.ToUpper())
 	fmt.Printf("%d running processes\n", len(procinfos))
 	fmt.Println()
 	proctable := [][]string{

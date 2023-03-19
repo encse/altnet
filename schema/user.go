@@ -30,8 +30,8 @@ func (User) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("user").GoType(Uname("")),
 		field.String("password").GoType(PasswordHash("")),
-		field.Time("last_login").Nillable(),
-		field.Time("last_login_attempt").Nillable(),
+		field.Time("last_login").Optional().Nillable(),
+		field.Time("last_login_attempt").Optional().Nillable(),
 	}
 }
 

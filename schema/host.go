@@ -1,12 +1,18 @@
 package schema
 
 import (
+	"strings"
+
 	"entgo.io/ent"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 )
 
 type HostName string
+
+func (h HostName) ToUpper() string {
+	return strings.ToUpper(string(h))
+}
 
 type Host struct {
 	ent.Schema

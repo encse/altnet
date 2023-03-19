@@ -48,9 +48,37 @@ func (uu *UserUpdate) SetLastLogin(t time.Time) *UserUpdate {
 	return uu
 }
 
+// SetNillableLastLogin sets the "last_login" field if the given value is not nil.
+func (uu *UserUpdate) SetNillableLastLogin(t *time.Time) *UserUpdate {
+	if t != nil {
+		uu.SetLastLogin(*t)
+	}
+	return uu
+}
+
+// ClearLastLogin clears the value of the "last_login" field.
+func (uu *UserUpdate) ClearLastLogin() *UserUpdate {
+	uu.mutation.ClearLastLogin()
+	return uu
+}
+
 // SetLastLoginAttempt sets the "last_login_attempt" field.
 func (uu *UserUpdate) SetLastLoginAttempt(t time.Time) *UserUpdate {
 	uu.mutation.SetLastLoginAttempt(t)
+	return uu
+}
+
+// SetNillableLastLoginAttempt sets the "last_login_attempt" field if the given value is not nil.
+func (uu *UserUpdate) SetNillableLastLoginAttempt(t *time.Time) *UserUpdate {
+	if t != nil {
+		uu.SetLastLoginAttempt(*t)
+	}
+	return uu
+}
+
+// ClearLastLoginAttempt clears the value of the "last_login_attempt" field.
+func (uu *UserUpdate) ClearLastLoginAttempt() *UserUpdate {
+	uu.mutation.ClearLastLoginAttempt()
 	return uu
 }
 
@@ -140,8 +168,14 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := uu.mutation.LastLogin(); ok {
 		_spec.SetField(user.FieldLastLogin, field.TypeTime, value)
 	}
+	if uu.mutation.LastLoginCleared() {
+		_spec.ClearField(user.FieldLastLogin, field.TypeTime)
+	}
 	if value, ok := uu.mutation.LastLoginAttempt(); ok {
 		_spec.SetField(user.FieldLastLoginAttempt, field.TypeTime, value)
+	}
+	if uu.mutation.LastLoginAttemptCleared() {
+		_spec.ClearField(user.FieldLastLoginAttempt, field.TypeTime)
 	}
 	if uu.mutation.HostsCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -235,9 +269,37 @@ func (uuo *UserUpdateOne) SetLastLogin(t time.Time) *UserUpdateOne {
 	return uuo
 }
 
+// SetNillableLastLogin sets the "last_login" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableLastLogin(t *time.Time) *UserUpdateOne {
+	if t != nil {
+		uuo.SetLastLogin(*t)
+	}
+	return uuo
+}
+
+// ClearLastLogin clears the value of the "last_login" field.
+func (uuo *UserUpdateOne) ClearLastLogin() *UserUpdateOne {
+	uuo.mutation.ClearLastLogin()
+	return uuo
+}
+
 // SetLastLoginAttempt sets the "last_login_attempt" field.
 func (uuo *UserUpdateOne) SetLastLoginAttempt(t time.Time) *UserUpdateOne {
 	uuo.mutation.SetLastLoginAttempt(t)
+	return uuo
+}
+
+// SetNillableLastLoginAttempt sets the "last_login_attempt" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableLastLoginAttempt(t *time.Time) *UserUpdateOne {
+	if t != nil {
+		uuo.SetLastLoginAttempt(*t)
+	}
+	return uuo
+}
+
+// ClearLastLoginAttempt clears the value of the "last_login_attempt" field.
+func (uuo *UserUpdateOne) ClearLastLoginAttempt() *UserUpdateOne {
+	uuo.mutation.ClearLastLoginAttempt()
 	return uuo
 }
 
@@ -357,8 +419,14 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	if value, ok := uuo.mutation.LastLogin(); ok {
 		_spec.SetField(user.FieldLastLogin, field.TypeTime, value)
 	}
+	if uuo.mutation.LastLoginCleared() {
+		_spec.ClearField(user.FieldLastLogin, field.TypeTime)
+	}
 	if value, ok := uuo.mutation.LastLoginAttempt(); ok {
 		_spec.SetField(user.FieldLastLoginAttempt, field.TypeTime, value)
+	}
+	if uuo.mutation.LastLoginAttemptCleared() {
+		_spec.ClearField(user.FieldLastLoginAttempt, field.TypeTime)
 	}
 	if uuo.mutation.HostsCleared() {
 		edge := &sqlgraph.EdgeSpec{

@@ -38,7 +38,7 @@ func main() {
 	fmt.Println()
 	fmt.Println()
 	fmt.Println()
-	fmt.Println("CONNECTED TO", strings.ToUpper(string(hostName)))
+	fmt.Println("CONNECTED TO", hostName.ToUpper())
 	fmt.Println(host.Location)
 	fmt.Println()
 

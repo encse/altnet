@@ -39,7 +39,7 @@ func main() {
 	host, err := network.Lookup(ctx, hostName)
 	io.FatalIfError(err)
 
-	fmt.Printf("Connected to %s.\n", strings.ToUpper(string(host.Name)))
+	fmt.Printf("Connected to %s.\n", host.Name.ToUpper())
 	fmt.Println()
 	fmt.Println(
 		io.Center(

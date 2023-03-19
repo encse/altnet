@@ -286,6 +286,16 @@ func LastLoginLTE(v time.Time) predicate.User {
 	return predicate.User(sql.FieldLTE(FieldLastLogin, v))
 }
 
+// LastLoginIsNil applies the IsNil predicate on the "last_login" field.
+func LastLoginIsNil() predicate.User {
+	return predicate.User(sql.FieldIsNull(FieldLastLogin))
+}
+
+// LastLoginNotNil applies the NotNil predicate on the "last_login" field.
+func LastLoginNotNil() predicate.User {
+	return predicate.User(sql.FieldNotNull(FieldLastLogin))
+}
+
 // LastLoginAttemptEQ applies the EQ predicate on the "last_login_attempt" field.
 func LastLoginAttemptEQ(v time.Time) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldLastLoginAttempt, v))
@@ -324,6 +334,16 @@ func LastLoginAttemptLT(v time.Time) predicate.User {
 // LastLoginAttemptLTE applies the LTE predicate on the "last_login_attempt" field.
 func LastLoginAttemptLTE(v time.Time) predicate.User {
 	return predicate.User(sql.FieldLTE(FieldLastLoginAttempt, v))
+}
+
+// LastLoginAttemptIsNil applies the IsNil predicate on the "last_login_attempt" field.
+func LastLoginAttemptIsNil() predicate.User {
+	return predicate.User(sql.FieldIsNull(FieldLastLoginAttempt))
+}
+
+// LastLoginAttemptNotNil applies the NotNil predicate on the "last_login_attempt" field.
+func LastLoginAttemptNotNil() predicate.User {
+	return predicate.User(sql.FieldNotNull(FieldLastLoginAttempt))
 }
 
 // HasHosts applies the HasEdge predicate on the "hosts" edge.

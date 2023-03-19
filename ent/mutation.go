@@ -2460,9 +2460,22 @@ func (m *UserMutation) OldLastLogin(ctx context.Context) (v *time.Time, err erro
 	return oldValue.LastLogin, nil
 }
 
+// ClearLastLogin clears the value of the "last_login" field.
+func (m *UserMutation) ClearLastLogin() {
+	m.last_login = nil
+	m.clearedFields[user.FieldLastLogin] = struct{}{}
+}
+
+// LastLoginCleared returns if the "last_login" field was cleared in this mutation.
+func (m *UserMutation) LastLoginCleared() bool {
+	_, ok := m.clearedFields[user.FieldLastLogin]
+	return ok
+}
+
 // ResetLastLogin resets all changes to the "last_login" field.
 func (m *UserMutation) ResetLastLogin() {
 	m.last_login = nil
+	delete(m.clearedFields, user.FieldLastLogin)
 }
 
 // SetLastLoginAttempt sets the "last_login_attempt" field.
@@ -2496,9 +2509,22 @@ func (m *UserMutation) OldLastLoginAttempt(ctx context.Context) (v *time.Time, e
 	return oldValue.LastLoginAttempt, nil
 }
 
+// ClearLastLoginAttempt clears the value of the "last_login_attempt" field.
+func (m *UserMutation) ClearLastLoginAttempt() {
+	m.last_login_attempt = nil
+	m.clearedFields[user.FieldLastLoginAttempt] = struct{}{}
+}
+
+// LastLoginAttemptCleared returns if the "last_login_attempt" field was cleared in this mutation.
+func (m *UserMutation) LastLoginAttemptCleared() bool {
+	_, ok := m.clearedFields[user.FieldLastLoginAttempt]
+	return ok
+}
+
 // ResetLastLoginAttempt resets all changes to the "last_login_attempt" field.
 func (m *UserMutation) ResetLastLoginAttempt() {
 	m.last_login_attempt = nil
+	delete(m.clearedFields, user.FieldLastLoginAttempt)
 }
 
 // AddHostIDs adds the "hosts" edge to the Host entity by ids.
@@ -2701,7 +2727,14 @@ func (m *UserMutation) AddField(name string, value ent.Value) error {
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
 func (m *UserMutation) ClearedFields() []string {
-	return nil
+	var fields []string
+	if m.FieldCleared(user.FieldLastLogin) {
+		fields = append(fields, user.FieldLastLogin)
+	}
+	if m.FieldCleared(user.FieldLastLoginAttempt) {
+		fields = append(fields, user.FieldLastLoginAttempt)
+	}
+	return fields
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
@@ -2714,6 +2747,14 @@ func (m *UserMutation) FieldCleared(name string) bool {
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
 func (m *UserMutation) ClearField(name string) error {
+	switch name {
+	case user.FieldLastLogin:
+		m.ClearLastLogin()
+		return nil
+	case user.FieldLastLoginAttempt:
+		m.ClearLastLoginAttempt()
+		return nil
+	}
 	return fmt.Errorf("unknown User nullable field %s", name)
 }
 

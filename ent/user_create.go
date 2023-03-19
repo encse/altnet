@@ -40,9 +40,25 @@ func (uc *UserCreate) SetLastLogin(t time.Time) *UserCreate {
 	return uc
 }
 
+// SetNillableLastLogin sets the "last_login" field if the given value is not nil.
+func (uc *UserCreate) SetNillableLastLogin(t *time.Time) *UserCreate {
+	if t != nil {
+		uc.SetLastLogin(*t)
+	}
+	return uc
+}
+
 // SetLastLoginAttempt sets the "last_login_attempt" field.
 func (uc *UserCreate) SetLastLoginAttempt(t time.Time) *UserCreate {
 	uc.mutation.SetLastLoginAttempt(t)
+	return uc
+}
+
+// SetNillableLastLoginAttempt sets the "last_login_attempt" field if the given value is not nil.
+func (uc *UserCreate) SetNillableLastLoginAttempt(t *time.Time) *UserCreate {
+	if t != nil {
+		uc.SetLastLoginAttempt(*t)
+	}
 	return uc
 }
 
@@ -100,12 +116,6 @@ func (uc *UserCreate) check() error {
 	}
 	if _, ok := uc.mutation.Password(); !ok {
 		return &ValidationError{Name: "password", err: errors.New(`ent: missing required field "User.password"`)}
-	}
-	if _, ok := uc.mutation.LastLogin(); !ok {
-		return &ValidationError{Name: "last_login", err: errors.New(`ent: missing required field "User.last_login"`)}
-	}
-	if _, ok := uc.mutation.LastLoginAttempt(); !ok {
-		return &ValidationError{Name: "last_login_attempt", err: errors.New(`ent: missing required field "User.last_login_attempt"`)}
 	}
 	return nil
 }

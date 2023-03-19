@@ -28,20 +28,23 @@ func main() {
 		return
 	}
 
-	targetHost := schema.HostName("")
+	targetHostName := schema.HostName("")
 	if len(os.Args) > 1 {
-		targetHost = schema.HostName(os.Args[1])
+		targetHostName = schema.HostName(os.Args[1])
 	} else {
-		targetHost, err = io.ReadArgFromList("host", os.Args, 1, host.Neighbours)
+		targetHostName, err = io.ReadArgFromList("host", os.Args, 1, host.Neighbours)
 		io.FatalIfError(err)
 	}
 
-	if !slices.Contains(host.Neighbours, targetHost) {
+	if !slices.Contains(host.Neighbours, targetHostName) {
 		fmt.Println("host not in NETSTAT")
 		return
 	}
 
-	altnet.Login(ctx, host)
+	targetHost, err := network.Lookup(ctx, targetHostName)
+	io.FatalIfError(err)
+
+	altnet.Login(ctx, targetHost)
 
 	fmt.Println("Connection closed")
 }
