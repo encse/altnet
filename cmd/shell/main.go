@@ -19,6 +19,7 @@ var commands = [][]string{
 	{"ftp <host>", "transfer files between hosts"},
 	{"hosts", "show a list of hosts on the network"},
 	{"ls <glob>", "list files"},
+	{"rm <file>", "remove file"},
 	{"netstat", "show connected hosts"},
 	{"porthack <host>", "scans for TCP service vulnerabilities to gain access"},
 	{"ps ", "show running processes on this host"},
@@ -50,7 +51,7 @@ func main() {
 		cmd, err := readNonEmptyLine(t)
 		io.FatalIfError(err)
 
-		parts := strings.Split(cmd, " ")
+		parts := strings.Fields(cmd)
 		if len(parts) > 0 {
 			exe := getExe(parts[0], commands)
 			if exe != "" {
@@ -72,7 +73,7 @@ func main() {
 
 func getExe(cmd string, commands [][]string) string {
 	for _, item := range commands {
-		cmdName := strings.Split(item[0], " ")[0]
+		cmdName := strings.Fields(item[0])[0]
 		if cmd == cmdName {
 			return "./" + cmdName
 		}

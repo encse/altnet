@@ -63,7 +63,7 @@ func Files(ctx context.Context) ([]FileInfo, error) {
 	}
 
 	for _, dir := range dirs {
-		owner := schema.Uname("bin")
+		owner := schema.Uname("sys")
 		if dir == userDir {
 			owner = user
 		}

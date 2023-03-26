@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"github.com/encse/altnet/lib/altnet"
-	"github.com/encse/altnet/lib/bin"
 	"github.com/encse/altnet/lib/io"
 )
 
@@ -15,7 +14,6 @@ func main() {
 	name, err := io.ReadArg("file", os.Args, 1)
 	io.FatalIfError(err)
 
-	fi, err := altnet.GetFileInfo(ctx, name)
+	err = altnet.Del(ctx, name)
 	io.FatalIfError(err)
-	bin.More(ctx, fi)
 }
