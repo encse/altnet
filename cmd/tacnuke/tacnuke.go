@@ -39,10 +39,10 @@ func main() {
 
 	ctx := altnet.ContextFromEnv(context.Background())
 
-	realUser, err := altnet.GetRealUser(ctx)
+	userName, err := altnet.GetUser(ctx)
 	io.FatalIfError(err)
 
-	if realUser == "guest" {
+	if userName == "guest" {
 		fmt.Println("Cannot run as guest, exiting.")
 		return
 	}
@@ -126,6 +126,9 @@ func main() {
 			fmt.Println("ok.")
 			fmt.Printf("Sending user registration request in the name of '%s'... ok.\n", userIdEntered)
 			time.Sleep(1000 * time.Millisecond)
+
+			realUser, err := altnet.GetRealUser(ctx)
+			io.FatalIfError(err)
 
 			u, err := network.Client.User.Query().Where(user.UserEQ(realUser)).First(ctx)
 			io.FatalIfError(err)

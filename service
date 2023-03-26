@@ -55,7 +55,7 @@ function restart() {
 }
 
 function console() {
-    docker exec -e ALTNET_HOST=csokavar -e ALTNET_USER=guest -it altnet ./shell
+    docker exec -e ALTNET_HOST=csokavar -e ALTNET_REAL_USER=encse -e ALTNET_USER=encse -it altnet ./shell
 }
 
 function bash() {

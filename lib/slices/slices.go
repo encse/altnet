@@ -55,6 +55,15 @@ func Take[E comparable](s []E, n int) []E {
 	return res
 }
 
+func GetOrDefault[A any](items []A, index int) A {
+	if index >= len(items) {
+		var a A
+		return a
+	} else {
+		return items[index]
+	}
+}
+
 func Chunk[E any](items []E, chunkSize int) [][]E {
 	var chunks [][]E
 	for i := 0; i < len(items); i += chunkSize {

@@ -10,6 +10,7 @@ import (
 
 	"github.com/encse/altnet/ent"
 	"github.com/encse/altnet/lib/altnet"
+	"github.com/encse/altnet/lib/bin"
 	"github.com/encse/altnet/lib/io"
 	"github.com/encse/altnet/lib/slices"
 	"github.com/encse/altnet/lib/uumap"
@@ -172,7 +173,7 @@ func printFile(ctx context.Context, name string) error {
 		return err
 	}
 
-	altnet.More(ctx, fi)
+	bin.More(ctx, fi)
 	return nil
 }
 

@@ -20,9 +20,6 @@ import (
 func main() {
 	ctx := altnet.ContextFromEnv(context.Background())
 
-	realUser, err := altnet.GetRealUser(ctx)
-	io.FatalIfError(err)
-
 	currentHost, err := altnet.GetHost(ctx)
 	io.FatalIfError(err)
 
@@ -53,6 +50,9 @@ func main() {
 	sb := strings.Builder{}
 
 	hacked := make([]schema.HostName, 0)
+
+	realUser, err := altnet.GetRealUser(ctx)
+	io.FatalIfError(err)
 
 	err = network.Client.User.Query().
 		Where(user.UserEQ(realUser)).

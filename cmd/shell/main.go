@@ -16,20 +16,21 @@ var commands = [][]string{
 	{"ansi <file>", "ansi file (*.ans) viewer"},
 	{"cat <file>", "print file contents"},
 	{"dial <phone number>", "connect to a host via modem"},
+	{"ftp <host>", "transfer files between hosts"},
 	{"hosts", "show a list of hosts on the network"},
 	{"ls <glob>", "list files"},
 	{"netstat", "show connected hosts"},
+	{"porthack <host>", "scans for TCP service vulnerabilities to gain access"},
 	{"ps ", "show running processes on this host"},
 	{"stats", "show user stats"},
 	{"skyline <user>", "show the GitHub contributions chart for a GitHub user"},
+	{"tacnuke <tel>", "TAC CRC vulnerability exploit"},
 	{"telnet <host>", "connect to a host in netstat"},
 	{"twitter <user>", "show the latest tweets of a Twitter user"},
 	{"uumap <host>", "show uumap entry for a host"},
 	{"uuplot <host>", "plot uupath to a host"},
 	{"wardial <area code>", "automated phone number scanner"},
 	{"zrun <game>", "play Z-machine games"},
-	{"tacnuke <tel>", "TAC CRC vulnerability exploit"},
-	{"porthack <host>", "scans for TCP service vulnerabilities to gain access"},
 }
 
 func main() {

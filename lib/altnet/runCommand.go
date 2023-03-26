@@ -49,9 +49,9 @@ func runAs(
 	cmd.Stderr = stderr
 	cmd.Env = ContextToEnv(os.Environ(), ctx)
 	if hidden {
-		cmd.Env = append(cmd.Env, fmt.Sprintf("ALTNET_EXE="))
+		cmd.Env = append(cmd.Env, "ALTNET_EXE=")
 	} else {
-		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", "ALTNET_EXE", path.Base(name)))
+		cmd.Env = append(cmd.Env, fmt.Sprintf("ALTNET_EXE=%s", path.Base(name)))
 	}
 	err := io.RunWithSavedTerminalState(cmd.Run)
 	if err != nil {

@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"hash/fnv"
+	stdio "io"
 	"io/fs"
-	"io/ioutil"
 	"math/rand"
 	"os"
 	"path"
@@ -27,15 +27,19 @@ const seedRoot = "data/textfiles"
 type FileInfo struct {
 	fsFileInfo fs.FileInfo
 	realPath   string
+	user       schema.Uname
+	group      schema.Uname
 }
 
-func (fi FileInfo) Name() string       { return fi.fsFileInfo.Name() }
-func (fi FileInfo) Size() int64        { return fi.fsFileInfo.Size() }
-func (fi FileInfo) Mode() fs.FileMode  { return fi.fsFileInfo.Mode() }
-func (fi FileInfo) ModTime() time.Time { return fi.fsFileInfo.ModTime() }
-func (fi FileInfo) IsDir() bool        { return fi.fsFileInfo.IsDir() }
-func (fi FileInfo) Sys() any           { return fi }
-func (fi FileInfo) RealPath() string   { return fi.realPath }
+func (fi FileInfo) Name() string        { return fi.fsFileInfo.Name() }
+func (fi FileInfo) Size() int64         { return fi.fsFileInfo.Size() }
+func (fi FileInfo) Mode() fs.FileMode   { return fi.fsFileInfo.Mode() }
+func (fi FileInfo) ModTime() time.Time  { return fi.fsFileInfo.ModTime() }
+func (fi FileInfo) IsDir() bool         { return fi.fsFileInfo.IsDir() }
+func (fi FileInfo) Sys() any            { return fi }
+func (fi FileInfo) User() schema.Uname  { return fi.user }
+func (fi FileInfo) Group() schema.Uname { return fi.group }
+func (fi FileInfo) RealPath() string    { return fi.realPath }
 
 func Files(ctx context.Context) ([]FileInfo, error) {
 	host, err := GetHost(ctx)
@@ -51,14 +55,19 @@ func Files(ctx context.Context) ([]FileInfo, error) {
 
 	res := make([]FileInfo, 0)
 
+	userDir := getAltnetUserDir(host, user)
 	dirs := []string{
-		getAltnetUserDir(host, user),
+		userDir,
 		getAltnetSystemDir(host),
 		getAltnetSeedDir(host),
 	}
 
 	for _, dir := range dirs {
-		files, err := ioutil.ReadDir(dir)
+		owner := schema.Uname("bin")
+		if dir == userDir {
+			owner = user
+		}
+		files, err := os.ReadDir(dir)
 		if errors.Is(err, fs.ErrNotExist) {
 			continue
 		} else if err != nil {
@@ -73,10 +82,13 @@ func Files(ctx context.Context) ([]FileInfo, error) {
 				log.Error()
 				continue
 			}
+
 			res = append(res,
 				FileInfo{
 					fsFileInfo: fi,
 					realPath:   path.Join(dir, file.Name()),
+					user:       owner,
+					group:      owner,
 				})
 		}
 	}
@@ -107,14 +119,79 @@ func Open(ctx context.Context, name string) (*os.File, error) {
 	return os.Open(fi.RealPath())
 }
 
-func Cat(ctx context.Context, fi FileInfo) error {
-	RunHiddenCommandWithStdErrRedirectedToStdout(ctx, "/bin/cat", fi.RealPath())
-	return nil
+func Copy(ctxSrc context.Context, ctxDst context.Context, name string) error {
+
+	_, err := GetUser(ctxSrc)
+	if err != nil {
+		return err
+	}
+
+	fiSrc, err := GetFileInfo(ctxSrc, name)
+	if err != nil {
+		return err
+	}
+
+	userDst, err := GetUser(ctxDst)
+	if err != nil {
+		return err
+	}
+
+	if userDst == "guest" {
+		// guest has no write access
+		return io.UserFriendlyError{Err: fs.ErrPermission}
+	}
+
+	remotehost, err := GetHost(ctxDst)
+	if err != nil {
+		return err
+	}
+
+	_, err = GetFileInfo(ctxDst, name)
+
+	if errors.Is(err, fs.ErrNotExist) {
+		targetDir := getAltnetUserDir(remotehost, userDst)
+		err = os.MkdirAll(targetDir, 0777)
+		if err != nil {
+			return err
+		}
+
+		w, err := os.Create(path.Join(targetDir, name))
+
+		if err != nil {
+			return err
+		}
+		defer w.Close()
+		r, err := os.Open(fiSrc.RealPath())
+		if err != nil {
+			return err
+		}
+		defer r.Close()
+		stdio.Copy(w, r)
+		return nil
+	} else if err != nil {
+		return err
+	} else {
+
+		// cannot overwrite files
+		return io.UserFriendlyError{Err: fs.ErrPermission}
+	}
 }
 
-func More(ctx context.Context, fi FileInfo) error {
-	RunHiddenCommandWithStdErrRedirectedToStdout(ctx, "/bin/more", fi.RealPath())
-	return nil
+func Del(ctx context.Context, name string) error {
+	user, err := GetUser(ctx)
+	if err != nil {
+		return err
+	}
+
+	fi, err := GetFileInfo(ctx, name)
+	if err != nil {
+		return err
+	}
+	if fi.User() == user {
+		return os.Remove(fi.RealPath())
+	} else {
+		return io.UserFriendlyError{Err: fs.ErrPermission}
+	}
 }
 
 func getAltnetUserDir(host schema.HostName, user schema.Uname) string {

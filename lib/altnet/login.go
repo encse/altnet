@@ -22,7 +22,10 @@ func ValidatePassword(
 	password schema.Password,
 ) (bool, error) {
 	realUser, err := GetRealUser(ctx)
-	io.FatalIfError(err)
+	if err != nil {
+		return false, err
+	}
+
 	if userid == realUser {
 		hacked, err := h.IsHacked(ctx, realUser)
 		io.FatalIfError(err)

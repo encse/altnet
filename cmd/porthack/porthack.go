@@ -26,10 +26,10 @@ func main() {
 
 	ctx := altnet.ContextFromEnv(context.Background())
 
-	realUser, err := altnet.GetRealUser(ctx)
+	user, err := altnet.GetUser(ctx)
 	io.FatalIfError(err)
 
-	if realUser == "guest" {
+	if user == "guest" {
 		fmt.Println("Cannot run as guest, exiting.")
 		return
 	}
@@ -77,7 +77,7 @@ func main() {
 	fmt.Println("completed.")
 	fmt.Println("")
 
-	err = exploit(ctx, network.Client, realUser, targetNode)
+	err = exploit(ctx, network.Client, targetNode)
 
 	io.FatalIfError(err)
 }
@@ -85,7 +85,6 @@ func main() {
 func exploit(
 	ctx context.Context,
 	client *ent.Client,
-	realUser schema.Uname,
 	node *ent.Host,
 ) error {
 
@@ -129,6 +128,9 @@ func exploit(
 					time.Sleep(1 * time.Second)
 					fmt.Println("Got shell, creating user.")
 					time.Sleep(1 * time.Second)
+
+					realUser, err := altnet.GetRealUser(ctx)
+					io.FatalIfError(err)
 
 					u, err := client.User.Query().Where(user.UserEQ(realUser)).First(ctx)
 					io.FatalIfError(err)
