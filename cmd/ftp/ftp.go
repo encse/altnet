@@ -55,7 +55,7 @@ func mainLoop(
 	ftp := Ftp{
 		localhost: localhost,
 		lctx:      ctx,
-		rctx:      altnet.SetHost(altnet.SetUser(ctx, ""), ""),
+		rctx:      altnet.EnterHost(ctx, "", ""),
 	}
 
 	if connectToHost != "" {
@@ -171,7 +171,7 @@ func (ftp Ftp) close(ctx context.Context, network uumap.Network) (Ftp, error) {
 
 	if remotehost != "" {
 		fmt.Println("221 Goodbye.")
-		ftp.rctx = altnet.SetHost(altnet.SetUser(ctx, ""), "")
+		ftp.rctx = altnet.EnterHost(ctx, "", "")
 	}
 	return ftp, nil
 }
@@ -197,7 +197,7 @@ func (ftp Ftp) open(ctx context.Context, network uumap.Network, stHostName strin
 		return ftp, nil
 	}
 
-	ftp.rctx = altnet.SetHost(altnet.SetUser(ctx, ""), remoteHostName)
+	ftp.rctx = altnet.EnterHost(ctx, remoteHostName, "")
 	ftp.mode = "BIN"
 
 	time.Sleep(1 * time.Second)

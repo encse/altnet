@@ -9,10 +9,12 @@ import (
 
 	"github.com/encse/altnet/lib/altnet"
 	"github.com/encse/altnet/lib/io"
+	"github.com/encse/altnet/lib/slices"
+	"github.com/encse/altnet/schema"
 	"golang.org/x/term"
 )
 
-var commands = [][]string{
+var allCommands = [][]string{
 	{"ansi <file>", "ansi file (*.ans) viewer"},
 	{"cat <file>", "print file contents"},
 	{"dial <phone number>", "connect to a host via modem"},
@@ -40,6 +42,8 @@ func main() {
 
 	host, err := altnet.GetHost(ctx)
 	io.FatalIfError(err)
+
+	commands := getCommands(host)
 
 	screen := struct {
 		stdio.Reader
@@ -69,6 +73,17 @@ func main() {
 			}
 		}
 	}
+}
+func getCommands(host schema.HostName) [][]string {
+	res := allCommands
+
+	if host != "csokavar" {
+		res = slices.Filter(res, func(line []string) bool {
+			cmd := strings.Fields(line[0])[0]
+			return cmd != "dial"
+		})
+	}
+	return res
 }
 
 func getExe(cmd string, commands [][]string) string {

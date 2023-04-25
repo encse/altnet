@@ -46,7 +46,7 @@ func ValidatePassword(
 }
 
 func Login(ctx context.Context, h *ent.Host) {
-	ctx = SetHost(ctx, h.Name)
+	ctx = EnterHost(ctx, h.Name, "")
 	if h.Type == host.TypeUucp {
 		RunHiddenCommand(ctx, "./uucplogin")
 	} else if h.Type == host.TypeBbs {

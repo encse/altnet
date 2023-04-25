@@ -148,7 +148,10 @@ func filesArea(ctx context.Context, host *ent.Host, width int) error {
 				fmt.Println()
 				break
 			} else if strings.ToUpper(option) == "D" {
-				downloadFile(ctx, files[idx].Name())
+				err = downloadFile(ctx, files[idx])
+				if err != nil {
+					return err
+				}
 				break
 			} else if strings.ToUpper(option) == "C" {
 				return nil
@@ -157,14 +160,54 @@ func filesArea(ctx context.Context, host *ent.Host, width int) error {
 	}
 }
 
-func downloadFile(ctx context.Context, name string) error {
+func downloadFile(srcCtx context.Context, fi altnet.FileInfo) error {
+	// fmt.Println("Failed to connect, check that XMODEM is running on your host.")
+
 	fmt.Println("XMODEM transfer is ready to begin.")
 	fmt.Println("Connecting...")
-	time.Sleep(2 * time.Second)
-	fmt.Println("Failed to connect, check that XMODEM is running on your host.")
-	fmt.Println("Press <any> key to continue.")
-	io.ReadKey()
-	return nil
+	time.Sleep(1 * time.Second)
+
+	dstCtx := altnet.ReverseConnection(srcCtx)
+
+	fmt.Println("Negotiating baud rate...  ")
+	time.Sleep(1 * time.Second)
+	baud := int64(4096)
+	fmt.Printf("%v bauds.\n", baud*8)
+
+	fmt.Println()
+	fmt.Printf("Starting transfer of %s ...", fi.Name())
+	time.Sleep(1 * time.Second)
+
+	fmt.Println()
+	fakeProgress(24, time.Duration(fi.Size()/baud)*time.Second)
+
+	err := altnet.Copy(srcCtx, dstCtx, fi.Name())
+	if uerr, ok := err.(io.UserFriendlyError); ok {
+		fmt.Println(uerr)
+		return nil
+	} else if err != nil {
+		return err
+	} else {
+		fmt.Println("Success!")
+		time.Sleep(1 * time.Second)
+		fmt.Println("")
+		return nil
+	}
+}
+
+func fakeProgress(width int, duration time.Duration) {
+	print := func(pct int) {
+		done := strings.Repeat(">", int(width*pct/100.0))
+		pad := strings.Repeat(" ", width-len(done))
+		fmt.Printf("\r%3d%% |%s%s|", pct, done, pad)
+	}
+
+	for pct := 0.0; pct < 100; pct += 10 / duration.Seconds() {
+		print(int(pct))
+		time.Sleep(100 * time.Millisecond)
+	}
+	print(100)
+	fmt.Println()
 }
 
 func printFile(ctx context.Context, name string) error {

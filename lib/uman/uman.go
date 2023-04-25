@@ -117,7 +117,7 @@ func RegisterUser(ctx context.Context, network uumap.Network) (*LoginRes, error)
 			continue
 		}
 
-		if uname == "guest" {
+		if uname == "guest" || uname == "sys" {
 			fmt.Println("Username is taken")
 			continue
 		}
