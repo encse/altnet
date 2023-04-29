@@ -30,6 +30,7 @@ var allCommands = [][]string{
 	{"tacnuke <tel>", "TAC CRC vulnerability exploit"},
 	{"telnet <host>", "connect to a host in netstat"},
 	{"twitter <user>", "show the latest tweets of a Twitter user"},
+	{"users", "show list of users"},
 	{"uumap <host>", "show uumap entry for a host"},
 	{"uuplot <host>", "plot uupath to a host"},
 	{"wardial <area code>", "automated phone number scanner"},

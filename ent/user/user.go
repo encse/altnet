@@ -11,6 +11,8 @@ const (
 	FieldUser = "user"
 	// FieldPassword holds the string denoting the password field in the database.
 	FieldPassword = "password"
+	// FieldStatus holds the string denoting the status field in the database.
+	FieldStatus = "status"
 	// FieldLastLogin holds the string denoting the last_login field in the database.
 	FieldLastLogin = "last_login"
 	// FieldLastLoginAttempt holds the string denoting the last_login_attempt field in the database.
@@ -31,6 +33,7 @@ var Columns = []string{
 	FieldID,
 	FieldUser,
 	FieldPassword,
+	FieldStatus,
 	FieldLastLogin,
 	FieldLastLoginAttempt,
 }

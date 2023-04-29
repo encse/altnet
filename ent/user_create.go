@@ -34,6 +34,12 @@ func (uc *UserCreate) SetPassword(sh schema.PasswordHash) *UserCreate {
 	return uc
 }
 
+// SetStatus sets the "status" field.
+func (uc *UserCreate) SetStatus(s string) *UserCreate {
+	uc.mutation.SetStatus(s)
+	return uc
+}
+
 // SetLastLogin sets the "last_login" field.
 func (uc *UserCreate) SetLastLogin(t time.Time) *UserCreate {
 	uc.mutation.SetLastLogin(t)
@@ -117,6 +123,9 @@ func (uc *UserCreate) check() error {
 	if _, ok := uc.mutation.Password(); !ok {
 		return &ValidationError{Name: "password", err: errors.New(`ent: missing required field "User.password"`)}
 	}
+	if _, ok := uc.mutation.Status(); !ok {
+		return &ValidationError{Name: "status", err: errors.New(`ent: missing required field "User.status"`)}
+	}
 	return nil
 }
 
@@ -150,6 +159,10 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 	if value, ok := uc.mutation.Password(); ok {
 		_spec.SetField(user.FieldPassword, field.TypeString, value)
 		_node.Password = value
+	}
+	if value, ok := uc.mutation.Status(); ok {
+		_spec.SetField(user.FieldStatus, field.TypeString, value)
+		_node.Status = value
 	}
 	if value, ok := uc.mutation.LastLogin(); ok {
 		_spec.SetField(user.FieldLastLogin, field.TypeTime, value)

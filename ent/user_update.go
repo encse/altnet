@@ -42,6 +42,12 @@ func (uu *UserUpdate) SetPassword(sh schema.PasswordHash) *UserUpdate {
 	return uu
 }
 
+// SetStatus sets the "status" field.
+func (uu *UserUpdate) SetStatus(s string) *UserUpdate {
+	uu.mutation.SetStatus(s)
+	return uu
+}
+
 // SetLastLogin sets the "last_login" field.
 func (uu *UserUpdate) SetLastLogin(t time.Time) *UserUpdate {
 	uu.mutation.SetLastLogin(t)
@@ -165,6 +171,9 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := uu.mutation.Password(); ok {
 		_spec.SetField(user.FieldPassword, field.TypeString, value)
 	}
+	if value, ok := uu.mutation.Status(); ok {
+		_spec.SetField(user.FieldStatus, field.TypeString, value)
+	}
 	if value, ok := uu.mutation.LastLogin(); ok {
 		_spec.SetField(user.FieldLastLogin, field.TypeTime, value)
 	}
@@ -260,6 +269,12 @@ func (uuo *UserUpdateOne) SetUser(s schema.Uname) *UserUpdateOne {
 // SetPassword sets the "password" field.
 func (uuo *UserUpdateOne) SetPassword(sh schema.PasswordHash) *UserUpdateOne {
 	uuo.mutation.SetPassword(sh)
+	return uuo
+}
+
+// SetStatus sets the "status" field.
+func (uuo *UserUpdateOne) SetStatus(s string) *UserUpdateOne {
+	uuo.mutation.SetStatus(s)
 	return uuo
 }
 
@@ -415,6 +430,9 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	}
 	if value, ok := uuo.mutation.Password(); ok {
 		_spec.SetField(user.FieldPassword, field.TypeString, value)
+	}
+	if value, ok := uuo.mutation.Status(); ok {
+		_spec.SetField(user.FieldStatus, field.TypeString, value)
 	}
 	if value, ok := uuo.mutation.LastLogin(); ok {
 		_spec.SetField(user.FieldLastLogin, field.TypeTime, value)

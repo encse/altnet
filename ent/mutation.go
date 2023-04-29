@@ -2248,6 +2248,7 @@ type UserMutation struct {
 	id                 *int
 	user               *schema.Uname
 	password           *schema.PasswordHash
+	status             *string
 	last_login         *time.Time
 	last_login_attempt *time.Time
 	clearedFields      map[string]struct{}
@@ -2427,6 +2428,42 @@ func (m *UserMutation) OldPassword(ctx context.Context) (v schema.PasswordHash, 
 // ResetPassword resets all changes to the "password" field.
 func (m *UserMutation) ResetPassword() {
 	m.password = nil
+}
+
+// SetStatus sets the "status" field.
+func (m *UserMutation) SetStatus(s string) {
+	m.status = &s
+}
+
+// Status returns the value of the "status" field in the mutation.
+func (m *UserMutation) Status() (r string, exists bool) {
+	v := m.status
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStatus returns the old "status" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldStatus(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStatus is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStatus requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStatus: %w", err)
+	}
+	return oldValue.Status, nil
+}
+
+// ResetStatus resets all changes to the "status" field.
+func (m *UserMutation) ResetStatus() {
+	m.status = nil
 }
 
 // SetLastLogin sets the "last_login" field.
@@ -2615,12 +2652,15 @@ func (m *UserMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *UserMutation) Fields() []string {
-	fields := make([]string, 0, 4)
+	fields := make([]string, 0, 5)
 	if m.user != nil {
 		fields = append(fields, user.FieldUser)
 	}
 	if m.password != nil {
 		fields = append(fields, user.FieldPassword)
+	}
+	if m.status != nil {
+		fields = append(fields, user.FieldStatus)
 	}
 	if m.last_login != nil {
 		fields = append(fields, user.FieldLastLogin)
@@ -2640,6 +2680,8 @@ func (m *UserMutation) Field(name string) (ent.Value, bool) {
 		return m.User()
 	case user.FieldPassword:
 		return m.Password()
+	case user.FieldStatus:
+		return m.Status()
 	case user.FieldLastLogin:
 		return m.LastLogin()
 	case user.FieldLastLoginAttempt:
@@ -2657,6 +2699,8 @@ func (m *UserMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldUser(ctx)
 	case user.FieldPassword:
 		return m.OldPassword(ctx)
+	case user.FieldStatus:
+		return m.OldStatus(ctx)
 	case user.FieldLastLogin:
 		return m.OldLastLogin(ctx)
 	case user.FieldLastLoginAttempt:
@@ -2683,6 +2727,13 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetPassword(v)
+		return nil
+	case user.FieldStatus:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStatus(v)
 		return nil
 	case user.FieldLastLogin:
 		v, ok := value.(time.Time)
@@ -2767,6 +2818,9 @@ func (m *UserMutation) ResetField(name string) error {
 		return nil
 	case user.FieldPassword:
 		m.ResetPassword()
+		return nil
+	case user.FieldStatus:
+		m.ResetStatus()
 		return nil
 	case user.FieldLastLogin:
 		m.ResetLastLogin()

@@ -153,6 +153,8 @@ func RegisterUser(ctx context.Context, network uumap.Network) (*LoginRes, error)
 	err = network.Client.User.Create().
 		SetUser(schema.Uname(uname)).
 		SetPassword(hash).
+		SetStatus("").
+		SetLastLogin(time.Now()).
 		Exec(ctx)
 
 	if err != nil {

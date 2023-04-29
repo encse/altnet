@@ -21,6 +21,8 @@ type User struct {
 	User schema.Uname `json:"user,omitempty"`
 	// Password holds the value of the "password" field.
 	Password schema.PasswordHash `json:"password,omitempty"`
+	// Status holds the value of the "status" field.
+	Status string `json:"status,omitempty"`
 	// LastLogin holds the value of the "last_login" field.
 	LastLogin *time.Time `json:"last_login,omitempty"`
 	// LastLoginAttempt holds the value of the "last_login_attempt" field.
@@ -55,7 +57,7 @@ func (*User) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case user.FieldID:
 			values[i] = new(sql.NullInt64)
-		case user.FieldUser, user.FieldPassword:
+		case user.FieldUser, user.FieldPassword, user.FieldStatus:
 			values[i] = new(sql.NullString)
 		case user.FieldLastLogin, user.FieldLastLoginAttempt:
 			values[i] = new(sql.NullTime)
@@ -91,6 +93,12 @@ func (u *User) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field password", values[i])
 			} else if value.Valid {
 				u.Password = schema.PasswordHash(value.String)
+			}
+		case user.FieldStatus:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field status", values[i])
+			} else if value.Valid {
+				u.Status = value.String
 			}
 		case user.FieldLastLogin:
 			if value, ok := values[i].(*sql.NullTime); !ok {
@@ -144,6 +152,9 @@ func (u *User) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("password=")
 	builder.WriteString(fmt.Sprintf("%v", u.Password))
+	builder.WriteString(", ")
+	builder.WriteString("status=")
+	builder.WriteString(u.Status)
 	builder.WriteString(", ")
 	if v := u.LastLogin; v != nil {
 		builder.WriteString("last_login=")

@@ -60,6 +60,7 @@ var (
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "user", Type: field.TypeString},
 		{Name: "password", Type: field.TypeString},
+		{Name: "status", Type: field.TypeString},
 		{Name: "last_login", Type: field.TypeTime, Nullable: true},
 		{Name: "last_login_attempt", Type: field.TypeTime, Nullable: true},
 	}
